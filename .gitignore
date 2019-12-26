@@ -1,0 +1,10 @@
+.*
+!.vscode
+!.gitignore 
+!.*rc.*
+node_modules
+*.log
+dist
+package-log.json
+*.zip
+__*

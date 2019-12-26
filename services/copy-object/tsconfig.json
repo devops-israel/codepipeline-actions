@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "strictNullChecks": false,
+        "preserveConstEnums": true,
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "target": "es5",
+        "outDir": "./dist/",
+        "lib": ["es2015"],
+        "moduleResolution": "node"
+    },
+    "exclude": [
+        "src/codepipeline-auto",
+        "src/codepipeline-shared",
+        "src/codepipeline-slack",
+        "src/send-email",
+        "src/shared",
+        "src/slack-post",
+        "src/slack-shared",
+        "src/slack-update",
+        "**/*.test.ts",
+        "node_modules",
+        "layers",
+        "dist",
+        ".vscode",
+        ".serverless"
+    ]
+}

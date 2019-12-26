@@ -1,0 +1,65 @@
+{
+  "name": "aws-codepipeline-actions",
+  "version": "0.1.0",
+  "author": "Meir Gabay <unfor19@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.7.2",
+    "@babel/preset-env": "^7.7.1",
+    "@babel/preset-typescript": "^7.7.2",
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.14",
+    "@typescript-eslint/eslint-plugin": "^2.8.0",
+    "@typescript-eslint/parser": "^2.8.0",
+    "aws-sdk": "^2.580.0",
+    "babel-jest": "^24.9.0",
+    "eslint": "^6.7.0",
+    "eslint-config-prettier": "^6.7.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "husky": ">=1",
+    "jest": "^24.9.0",
+    "libxmljs": "^0.19.7",
+    "lint-staged": ">=8",
+    "prettier": "^1.19.1",
+    "ts-jest": "^24.1.0",
+    "ts-loader": "^6.2.1",
+    "ts-node": "^8.5.2",
+    "typescript": "^3.7.2",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-node-externals": "^1.7.2"
+  },
+  "scripts": {
+    "test:vault": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_TESTING} -- jest --detectOpenHandles",
+    "test:aws": "jest --detectOpenHandles",
+    "build:prod": "webpack --config webpack.config.js --mode production",
+    "build:dev": "webpack --config webpack.config.js --mode development",
+    "deploy:vault-dev": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_DEV} -- sls deploy --verbose --stage=dev",
+    "deploy:vault-staging": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_STAGING} -- sls deploy --verbose --stage=staging",
+    "deploy:vault-prod": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_PROD} -- sls deploy --verbose --stage=prod",
+    "deploy:dev": "sls deploy --verbose --stage=dev",
+    "deploy:staging": "sls deploy --verbose --stage=staging",
+    "deploy:prod": "sls deploy --verbose --stage=prod",
+    "destroy:vault-dev": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_DEV} -- sls remove --verbose --stage=dev",
+    "destroy:vault-staging": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_STAGING} -- sls remove --verbose --stage=staging",
+    "destroy:vault-prod": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_PROD} -- sls remove --verbose --stage=prod",
+    "destroy:dev": "sls remove --verbose --stage=dev",
+    "destroy:staging": "sls remove --verbose --stage=staging",
+    "destroy:prod": "sls remove --verbose --stage=prod"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.ts": [
+      "eslint --fix",
+      "git add"
+    ]
+  }
+}

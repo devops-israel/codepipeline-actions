@@ -1,0 +1,14 @@
+#!/bin/bash
+ROOTDIR="${PWD}"
+servicesFolders=$(find ./services -maxdepth 1 -type d -exec bash -c '[ -f "$0"/package.json ] && [ -f "$0"/yarn.lock ]' '{}' \; -print | sort)
+servicesFolders=$(echo $servicesFolders | tr ' ' '\n' | grep -v "shared")
+echo $servicesFolders
+echo "Building the following services:" ; echo "$servicesFolders"
+for folder in ${servicesFolders}; do 
+    cd $folder ;
+    echo ">> Building $folder"; yarn build:${STAGE} ;
+    echo ">> Finished Building $folder" ;
+    cd "${ROOTDIR}";
+done
+
+printf "Successfully Built\n$servicesFolders\n"

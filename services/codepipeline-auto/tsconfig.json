@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": false,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "target": "es5",
+    "outDir": "./dist/",
+    "lib": [
+      "es2015"
+    ],
+    "moduleResolution": "node",
+  },
+  "exclude": [
+    "src/send-email",
+    "src/invoke-lambda",
+    "src/send-slack",
+    "**/*.test.ts",
+    "node_modules",
+    "layers",
+    "dist",
+    ".vscode",
+    ".serverless"
+  ]
+}

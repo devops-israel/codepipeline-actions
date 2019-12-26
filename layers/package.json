@@ -1,0 +1,20 @@
+{
+    "name": "aws-codepipeline-actions",
+    "version": "0.1.0",
+    "author": "Meir Gabay <unfor19@gmail.com>",
+    "license": "MIT",
+    "scripts": {
+        "deploy:vault-dev": "export $(cat ../.env) && aws-vault exec ${VAULT_PROFILE_DEV} -- sls deploy --verbose --stage=dev --appname=${APP_NAME}",
+        "deploy:vault-staging": "export $(cat ../.env) && aws-vault exec ${VAULT_PROFILE_STAGING} -- sls deploy --verbose --stage=staging --appname=${APP_NAME}",
+        "deploy:vault-prod": "export $(cat ../.env) && aws-vault exec ${VAULT_PROFILE_PROD} -- sls deploy --verbose --stage=prod --appname=${APP_NAME}",
+        "deploy:dev": "sls deploy --verbose --stage=dev --appname=${APP_NAME}",
+        "deploy:staging": "sls deploy --verbose --stage=staging --appname=${APP_NAME}",
+        "deploy:prod": "sls deploy --verbose --stage=prod --appname=${APP_NAME}",
+        "destroy:vault-dev": "export $(cat ../.env) && aws-vault exec ${VAULT_PROFILE_DEV} -- sls remove --verbose --stage=dev --appname=${APP_NAME}",
+        "destroy:vault-staging": "export $(cat ../.env) && aws-vault exec ${VAULT_PROFILE_STAGING} -- sls remove --verbose --stage=staging --appname=${APP_NAME}",
+        "destroy:vault-prod": "export $(cat ../.env) && aws-vault exec ${VAULT_PROFILE_PROD} -- sls remove --verbose --stage=prod --appname=${APP_NAME}",
+        "destroy:dev": "sls remove --verbose --stage=dev --appname=${APP_NAME}",
+        "destroy:staging": "sls remove --verbose --stage=staging --appname=${APP_NAME}",
+        "destroy:prod": "sls remove --verbose --stage=prod --appname=${APP_NAME}"
+    }
+}

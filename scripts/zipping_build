@@ -1,0 +1,11 @@
+#!/bin/bash
+echo ">> Identifying files & folders to zip"
+servicesFolders=$(find ./services -maxdepth 1 -type d -exec bash -c '[ -f "$0"/package.json ] && [ -f "$0"/yarn.lock ]' '{}' \; -print | sort)
+servicesFolders=$(echo $servicesFolders | tr ' ' '\n' | grep -v "shared")
+servicesFolders=$(echo $servicesFolders | sed 's/[^ ]*/&\/dist/g')
+echo $servicesFolders
+serverlessFiles=$(find -maxdepth 1 -name "serverless.*yml" -type f | sort)
+echo $serverlessFiles
+echo package.json
+echo ">> Zipping build to candidate.zip"
+zip -rq candidate.zip package.json $servicesFolders $serverlessFiles

@@ -1,0 +1,5 @@
+#!/bin/bash
+ROOTDIR="${PWD}"
+layersFolders=$(find ./layers -maxdepth 2 -type d -exec bash -c '[ -f "$0"/package.json ] && [ -f "$0"/yarn.lock ]' '{}' \; -print | sort)
+echo "Installing dependencies for the following layers:" ; echo "$layersFolders"
+for folder in ${layersFolders}; do cd $folder; echo ">> Building $folder"; yarn install ; cd .. ; zip -r $(basename ${PWD}).zip * ; cd "${ROOTDIR}"; done

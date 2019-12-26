@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  CodePipeline Template for aws-codepipeline-actions
+
+Parameters:
+  AppName:
+    Type: String
+  Stage:
+    Type: String
+    Description: Select the stage to deploy
+    AllowedValues:
+      - devtest
+      - dev
+      - staging
+      - prod
+    ConstraintDescription: Must be any of the available options
+  CodeBuildCandidateBucketName:
+    Description: The name of the bucket
+    Type: String
+
+Resources:
+  # Temp bucket for storing build artifacts
+  PipelineBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+    # Omitted bucket name property, AWS will generate it automatically
+
+  PipelineBucketBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref PipelineBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DenyUnEncryptedObjectUploads
+            Effect: Deny
+            Principal: '*'
+            Action: s3:PutObject
+            Resource: !Join ['', [!GetAtt PipelineBucket.Arn, '/*']]
+            Condition:
+              StringNotEquals:
+                s3:x-amz-server-side-encryption: aws:kms
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource: !Join ['', [!GetAtt PipelineBucket.Arn, '/*']]
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  CodePipeLineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - 'codepipeline.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'codebuild:BatchGetBuilds'
+                  - 'codebuild:StartBuild'
+                  - 'lambda:InvokeFunction'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'sns:Publish'
+                Resource: '*'
+
+  CodePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      Name: !Sub ${AppName}-CodePipeline-${Stage}
+      RoleArn: !GetAtt CodePipeLineRole.Arn
+      ArtifactStore:
+        Location: !Ref PipelineBucket
+        Type: S3
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Candidate
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: S3
+              Configuration:
+                S3Bucket: !Ref CodeBuildCandidateBucketName # Provided in Parameters
+                S3ObjectKey: candidate.zip
+                PollForSourceChanges: true
+              OutputArtifacts:
+                - Name: BuildCandidate
+        - Name: Release
+          Actions:
+            - Name: ApproveRelease
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                # This is where use the SNS Topic
+                NotificationArn: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${AppName}-ReleaseSNSTopic-${Stage}'
+                CustomData: !Sub '${Stage}'
+              RunOrder: 1

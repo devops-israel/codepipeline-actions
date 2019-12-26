@@ -1,0 +1,11 @@
+version: '2.1'
+services:
+  serverless:
+    image: amaysim/serverless:1.60.0
+    env_file:
+      - .env
+    command: bash -c "yarn installAllDeps && yarn build:local && bash"
+    volumes:
+      - ~/.aws:/root/.aws
+      - ~/.ssh:/root/.ssh
+      - .:/opt/app

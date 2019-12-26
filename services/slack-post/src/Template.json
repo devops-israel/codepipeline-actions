@@ -1,0 +1,57 @@
+{
+  "channel": "{Channel}",
+  "text": "Take Action on {Stage}",
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Approval request:\n*<{LinkGitHub}|{WebhookTrigger} - {WebhookEvent}>*"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Source ID*\n{SourceId}\n*Head Ref*\n{WebhookHeadRef}\n"
+      },
+      "accessory": {
+        "type": "image",
+        "image_url": "{GitHubAvatar}",
+        "alt_text": "GitHubAvatar"
+      }
+    },
+    {
+      "type": "section",
+      "text": { "type": "mrkdwn", "text": "*Approve?*" }
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "Yes",
+            "emoji": true
+          },
+          "style": "primary",
+          "type": "button",
+          "value": "{\"action\": \"Approved\", \"token\": \"{Token}\",\"pipelineName\": \"{PipelineName}\", \"stageName\": \"{StageName}\", \"actionName\":\"{ActionName}\"}"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "No",
+            "emoji": true
+          },
+          "style": "danger",
+          "type": "button",
+          "value": "{\"action\": \"Rejected\", \"token\": \"{Token}\",\"pipelineName\": \"{PipelineName}\", \"stageName\": \"{StageName}\", \"actionName\":\"{ActionName}\"}"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    }
+  ]
+}

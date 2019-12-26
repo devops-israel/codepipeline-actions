@@ -1,0 +1,22 @@
+service: ${self:custom.appname}-codepipeline-actions-layers
+package:
+    individually: true
+
+frameworkVersion: '>=1.1.0 <2.0.0'
+
+custom: '${file(../serverless.vars.yml):vars}'
+provider:
+    name: aws
+    runtime: ${self:custom.runtime.${self:provider.stage}}
+    memorySize: ${self:custom.memory_size.${self:provider.stage}}
+    stage: ${opt:stage}
+    region: ${self:custom.region.${self:provider.stage}}
+    deploymentBucket:
+        name: '${env:LAYERS_DEPLOYMENT_BUCKET}'
+layers:
+    codepipeline-actions-axios:
+        package:
+            artifact: ./axios/axios.zip
+    codepipeline-actions-crypto:
+        package:
+            artifact: ./crypto/crypto.zip
