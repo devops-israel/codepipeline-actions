@@ -8,3 +8,4 @@ dist
 package-log.json
 *.zip
 __*
+*.template
