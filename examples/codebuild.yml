@@ -22,15 +22,11 @@ Parameters:
   GithubBranchName:
     Description: 'GitHub branch name'
     Type: String
+  CandidatesBucketName:
+    Description: 'Auto-created by yarn initialize'
+    Type: String
 
 Resources:
-  CandidatesBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub '${AppName}-candidates-${Stage}'
-      VersioningConfiguration:
-        Status: Enabled
-
   CodeBuildCandidateRole:
     Type: AWS::IAM::Role
     Properties:
@@ -58,7 +54,7 @@ Resources:
                   # - "s3:PutObjectAcl"
                   # - "s3:PutObjectVersionAcl"
                 Resource:
-                  - !Sub '${CandidatesBucket.Arn}/*'
+                  - !Sub 'arn:aws:s3:::${CandidatesBucketName}/*'
               - Effect: Allow
                 Action:
                   - 'logs:CreateLogGroup'
@@ -82,7 +78,7 @@ Resources:
         Image: 'aws/codebuild/standard:2.0'
         EnvironmentVariables:
           - Name: CANDIDATES_BUCKET_NAME
-            Value: !Ref CandidatesBucket
+            Value: !Ref CandidatesBucketName
           - Name: STAGE
             Value: !Ref Stage
       Source:
@@ -115,7 +111,7 @@ Resources:
                 - yarn installServicesDeps
             build:
               commands:
-                - yarn build:codebuild
+                - yarn build
             post_build:
               commands:         
                 - yarn zip:build

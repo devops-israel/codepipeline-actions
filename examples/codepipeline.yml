@@ -14,7 +14,7 @@ Parameters:
       - staging
       - prod
     ConstraintDescription: Must be any of the available options
-  CodeBuildCandidateBucketName:
+  CandidatesBucketName:
     Description: The name of the bucket
     Type: String
 
@@ -101,7 +101,7 @@ Resources:
                 Version: '1'
                 Provider: S3
               Configuration:
-                S3Bucket: !Ref CodeBuildCandidateBucketName # Provided in Parameters
+                S3Bucket: !Ref CandidatesBucketName # Provided in Parameters
                 S3ObjectKey: candidate.zip
                 PollForSourceChanges: true
               OutputArtifacts:
