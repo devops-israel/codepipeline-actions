@@ -1,10 +1,10 @@
-service: ${self:custom.appname}-codepipeline-actions
+service: ${self:custom.appname}-cpa
 package:
   individually: true
 
-frameworkVersion: ">=1.1.0 <2.0.0"
+frameworkVersion: '>=1.1.0 <2.0.0'
 
-custom: "${file(serverless.vars.yml):vars}"
+custom: '${file(serverless.vars.yml):vars}'
 provider:
   name: aws
   runtime: ${self:custom.runtime.${self:provider.stage}}
@@ -12,8 +12,6 @@ provider:
   stage: ${opt:stage}
   region: ${self:custom.region.${self:provider.stage}}
   environment: ${file(serverless.vars.yml):vars.common_env_vars}
-  deploymentBucket:
-    name: ${env:CODEPIPELINE_ACTIONS_DEPLOYMENT_BUCKET}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -21,12 +19,12 @@ provider:
         - logs:CreateLogStream
         - logs:PutLogEvents
       Resource:
-        - "Fn::Join":
-            - ":"
-            - - "arn:aws:logs"
-              - Ref: "AWS::Region"
-              - Ref: "AWS::AccountId"
-              - "log-group:/aws/lambda/*:*:*"
+        - 'Fn::Join':
+            - ':'
+            - - 'arn:aws:logs'
+              - Ref: 'AWS::Region'
+              - Ref: 'AWS::AccountId'
+              - 'log-group:/aws/lambda/*:*:*'
 resources:
   - ${file(serverless.custom.yml):customResources}
   - ${file(serverless.custom.yml):customOutputs}

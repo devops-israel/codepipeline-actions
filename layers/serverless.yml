@@ -1,22 +1,20 @@
-service: ${self:custom.appname}-codepipeline-actions-layers
+service: ${self:custom.appname}-cpa-layers
 package:
-    individually: true
+  individually: true
 
 frameworkVersion: '>=1.1.0 <2.0.0'
 
 custom: '${file(../serverless.vars.yml):vars}'
 provider:
-    name: aws
-    runtime: ${self:custom.runtime.${self:provider.stage}}
-    memorySize: ${self:custom.memory_size.${self:provider.stage}}
-    stage: ${opt:stage}
-    region: ${self:custom.region.${self:provider.stage}}
-    deploymentBucket:
-        name: '${env:LAYERS_DEPLOYMENT_BUCKET}'
+  name: aws
+  runtime: ${self:custom.runtime}
+  memorySize: ${self:custom.memory_size.${self:provider.stage}}
+  stage: ${opt:stage}
+  region: ${self:custom.region.${self:provider.stage}}
 layers:
-    codepipeline-actions-axios:
-        package:
-            artifact: ./axios/axios.zip
-    codepipeline-actions-crypto:
-        package:
-            artifact: ./crypto/crypto.zip
+  cpa-axios:
+    package:
+      artifact: ./axios/axios.zip
+  cpa-crypto:
+    package:
+      artifact: ./crypto/crypto.zip

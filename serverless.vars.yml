@@ -2,8 +2,6 @@
 # And of course do whatever changes you need so it fits your infrastructure
 vars:
   appname: ${opt:appname}
-  service_name: '${self:custom.appname}-codepipeline-actions'
-  axios:
   account_number: ${env:AWS_ACCOUNT_NUMBER}
   region:
     dev: eu-west-1
