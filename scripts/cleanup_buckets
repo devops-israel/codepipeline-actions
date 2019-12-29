@@ -1,4 +1,11 @@
 #!/bin/bash
+list_buckets_filter () {
+    local filter=${1}
+    buckets_list=$(aws s3api list-buckets)
+    arr_string=$(echo "${buckets_list}" | jq --arg str "${filter}" -cr '.Buckets[] | select (.Name|test($str)) | .Name' | tr ' ' '\n')
+    echo $arr_string
+}
+
 delete_bucket() {
     bucket_name=$1
     aws s3api delete-bucket --bucket $bucket_name \
@@ -19,7 +26,34 @@ delete_buckets () {
     done
 }
 
-delete_buckets "${APP_NAME}-cpa-deployment-[a-z0-9]*-${STAGE}"
-delete_buckets "${APP_NAME}-cpa-layers-deployment-[a-z0-9]*-${STAGE}"
-delete_buckets "${APP_NAME}-candidates-[a-z0-9]*-${STAGE}"
-delete_buckets "${APP_NAME}-cfn-deployment-[a-z0-9]*-${STAGE}"
+filters_list=("${APP_NAME}-cpa-deployment-[a-z0-9]*-${STAGE}" \
+    "${APP_NAME}-candidates-[a-z0-9]*-${STAGE}" \
+    "${APP_NAME}-cpa-layers-deployment-[a-z0-9]*-${STAGE}" \
+    "${APP_NAME}-cpa-cfn-deployment-[a-z0-9]*-${STAGE}")
+
+echo "The following buckets will be deleted: "
+count_buckets=0
+for filter in "${filters_list[@]}"; do
+    buckets_list=$(list_buckets_filter "${filter}")
+    if [ ! -z $buckets_list ]; then
+        echo $buckets_list
+        count_buckets=($echo $(($count_buckets+1)))
+    fi
+done
+
+if [[ $count_buckets == 0 ]]; then
+    echo "No buckets to delete, aborting ..."
+    exit
+fi
+
+echo -n "Are you sure? (yes/no): "
+read answer
+if [[ $answer != "yes" ]]; then
+    echo "Aborting ... "
+    exit
+else
+    echo "Deleting buckets ..."
+    for filter in "${filters_list[@]}"; do
+        echo $(delete_buckets "${filter}")
+    done
+fi

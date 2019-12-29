@@ -77,17 +77,17 @@ handle_bucket "${APP_NAME}-cpa-layers-deployment-[a-z0-9]*-${STAGE}" \
     "cpa-layers-deployment" \
     "versioning"
 
-handle_bucket "${APP_NAME}-candidates-[a-z0-9]*-${STAGE}" \
+handle_bucket "${APP_NAME}-cpa-candidates-[a-z0-9]*-${STAGE}" \
     "CANDIDATES_BUCKET_NAME" \
     "candidates" \
     "versioning"
 
-handle_bucket "${APP_NAME}-candidates-[a-z0-9]*-${STAGE}" \
+handle_bucket "${APP_NAME}-cpa-candidates-[a-z0-9]*-${STAGE}" \
     "SLACK_POST_METADATA_BUCKET_NAME" \
     "candidates" \
     "versioning"
 
-handle_bucket "${APP_NAME}-cfn-deployment-[a-z0-9]*-${STAGE}" \
+handle_bucket "${APP_NAME}-cpa-cfn-deployment-[a-z0-9]*-${STAGE}" \
     "TEMP_CFN_TEMPLATES_BUCKET" \
     "cfn-deployment"
 
