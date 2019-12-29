@@ -1,0 +1,9 @@
+#!/bin/bash
+# if .env doesn't exist, create it
+if [[ ! -f '.env' ]]; then
+    echo "Copying env to .env"
+    cp env .env
+    [[ -f '.env.' ]] && echo "Successfully copied" || echo "Failed to copy"
+else
+    echo "File .env exists"
+fi

@@ -1,0 +1,105 @@
+#!/bin/bash
+usage()
+{
+  cat << EOF
+usage: bash ./scripts/packndeploy -n service_name -s stage -p vault_profie_name
+-name | --service_name      (Required)             Service to deploy
+-s    | --stage             ($STAGE)               Stage to deploy
+-ghb  | --githubbranch      (master)               CodeBuild
+-ghr  | --githubrepo        (codepipeline-actions) CodeBuild
+-gho  | --githubowner       (devops-internal)      CodeBuild
+-r    | --region            ($REGION)              Region to deploy
+-a    | --app_name          ($APP_NAME)            App name
+-h    | --help                                     Brings up this menu
+EOF
+}
+
+service_name=
+stage=${STAGE}
+s3_temp_bucket=${TEMP_CFN_TEMPLATES_BUCKET}
+src_bucket_name=${CANDIDATES_BUCKET_NAME}
+app_name=${APP_NAME}
+region=${REGION}
+github_branch=${GITHUB_BRANCH}
+github_repo=${GITHUB_REPONAME}
+github_owner=${GITHUB_OWNER}
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -name | --service_name )
+            shift
+            service_name=$1
+        ;;
+        -s | --stage )
+            shift
+            stage=$1
+        ;;
+        -ghb | --github_branch )
+            shift
+            githubbranch=$1
+        ;;
+        -ghr | --github_repo )
+            shift
+            githubbranch=$1
+        ;;
+        -gho | --github_owner )
+            shift
+            githubbranch=$1
+        ;;                
+        -r | --region )
+            shift
+            region=$1
+        ;;
+        -a | --app_name )
+            shift
+            app_name=$1
+        ;;
+        -h | --help )             usage
+            exit
+        ;;
+        * )                           usage
+            exit 1
+    esac
+    shift
+done
+
+if [ -z $service_name ]; then
+    echo "Service name is required, provide it with the flag: -n service_name"
+    exit
+fi
+
+
+if [ -z $s3_temp_bucket ]; then
+    echo "TEMP_CFN_TEMPLATES_BUCKET is empty. Please run: bash ./scripts/initialize"
+    exit
+fi
+
+if [ -z $stage ]; then
+    echo "Stage is required, provide it with the flag: -s stage"
+    exit
+fi
+
+filename="$service_name.yml"
+infra_dir="./examples"
+if [ ! -f "$infra_dir/$filename" ]; then
+    echo "File does not exist, make sure the service name matches the yml file name."
+    exit
+fi
+
+is_codebuild=$(echo "$filename" | grep "codebuild")
+is_codepipeline=$(echo "$filename" | grep "codepipeline")
+
+rm -f ./scripts/${app_name}-${service_name}-${stage}.template
+package=$(aws cloudformation package \
+    --template-file "$infra_dir/${filename}" \
+    --s3-bucket "${s3_temp_bucket}" \
+--output-template-file "./scripts/${app_name}-${service_name}-${stage}.template")
+package_success=$(echo $package | grep "YOUR STACK NAME")
+
+if [ -z "${package_success}" ]; then
+    echo "${package}"
+    echo "Failed to create package, fix the above."
+    exit
+fi
+
+echo "Successfully created the package."

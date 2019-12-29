@@ -1,0 +1,95 @@
+#!/bin/bash
+is_number () {
+    local var=$1
+    re_number='^[0-9]+$'
+    [[ $var =~ $re_number ]] && echo 0 || echo 1
+}
+
+set_env_var () {
+    local key=$1
+    local newvalue=$2
+    current_value=$(printenv $key)
+    if [[ $newvalue != $current_value ]]; then
+        # Replace only if different
+        current_keypair=$(cat .env | grep $key)
+        echo "${key}=${newvalue}"
+        sed -i "s|${current_keypair}|${key}=${newvalue}|g" .env
+    fi
+}
+
+get_account_number() {
+    echo $(aws sts get-caller-identity | jq -r .Account)
+}
+
+select_bucket () {
+    local filter=${1}
+    buckets_list=$(aws s3api list-buckets)
+    arr_string=$(echo "${buckets_list}" | jq --arg str "${filter}" -cr '.Buckets[] | select (.Name|test($str)) | .Name' | tr ' ' '\n')
+    arr=($(echo $arr_string))
+    # Returns the first options that it found
+    echo ${arr[0]}
+}
+
+create_bucket() {
+    local context=$1
+    bucket_name=${APP_NAME}-${context}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 10 | head -n 1)-${STAGE}
+    result=$(aws s3api create-bucket --bucket $bucket_name \
+        --region ${AWS_REGION} \
+        --create-bucket-configuration LocationConstraint=${AWS_REGION} \
+        --acl=private)
+    echo $bucket_name
+}
+
+put_bucket_versioning () {
+    local bucket_name=$1
+    result=$(aws s3api put-bucket-versioning --bucket $bucket_name \
+        --versioning-configuration Status=Enabled)
+    echo $result
+}
+
+handle_bucket () {
+    local filter=$1 env_key=$2 bucket_context=$3 versioning=$4
+    bucket_name=$(select_bucket "${filter}")
+    if [[ ! -z $bucket_name ]]; then
+        set_env_var $env_key $bucket_name
+    else # doesn't exist, create bucket
+        bucket_name=$(create_bucket $bucket_context)
+        if [[ ! -z $versioning ]]; then
+            versioning=$(put_bucket_versioning $bucket_name)
+        fi
+        set_env_var $env_key $bucket_name
+    fi
+}
+
+# if .env doesn't exist, create it
+[[ ! -f '.env' ]] && cp env .env
+
+# set account number if empty
+[[ -z $AWS_ACCOUNT_NUMBER ]] && set_env_var 'AWS_ACCOUNT_NUMBER' $(get_account_number)
+
+handle_bucket "${APP_NAME}-cpa-deployment-[a-z0-9]*-${STAGE}" \
+    "CODEPIPELINE_ACTIONS_DEPLOYMENT_BUCKET" \
+    "cpa-deployment" \
+    "versioning"
+
+handle_bucket "${APP_NAME}-cpa-layers-deployment-[a-z0-9]*-${STAGE}" \
+    "LAYERS_DEPLOYMENT_BUCKET" \
+    "cpa-layers-deployment" \
+    "versioning"
+
+handle_bucket "${APP_NAME}-candidates-[a-z0-9]*-${STAGE}" \
+    "CANDIDATES_BUCKET_NAME" \
+    "candidates" \
+    "versioning"
+
+handle_bucket "${APP_NAME}-candidates-[a-z0-9]*-${STAGE}" \
+    "SLACK_POST_METADATA_BUCKET_NAME" \
+    "candidates" \
+    "versioning"
+
+handle_bucket "${APP_NAME}-cfn-deployment-[a-z0-9]*-${STAGE}" \
+    "TEMP_CFN_TEMPLATES_BUCKET" \
+    "cfn-deployment"
+
+set_env_var "CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME" \
+    "${APP_NAME}-cpa-${STAGE}-slackUpdateRelease"

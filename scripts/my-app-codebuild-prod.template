@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CodeBuild Template for aws-codepipeline-actions
+
+  '
+Parameters:
+  AppName:
+    Type: String
+  Stage:
+    Type: String
+    Description: Select the stage to deploy
+    AllowedValues:
+    - dev
+    - staging
+    - prod
+    ConstraintDescription: Must be any of the available options
+  GithubOwner:
+    Type: String
+    Description: Github repo owner
+  GithubRepo:
+    Type: String
+    Description: Github repo name
+  GithubBranchName:
+    Description: GitHub branch name
+    Type: String
+  CandidatesBucketName:
+    Description: Bucket name
+    Type: String
+Resources:
+  CandidatesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: ${CandidatesBucketName}
+      VersioningConfiguration:
+        Status: Enabled
+  CodeBuildCandidateRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - codebuild.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /service-role/
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:PutObject
+            Resource:
+            - Fn::Sub: ${CandidatesBucket.Arn}/*
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource:
+            - '*'
+  CodeBuildCandidate:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name:
+        Fn::Sub: ${AppName}-CodeBuildCandidate-${Stage}
+      ServiceRole:
+        Fn::GetAtt:
+        - CodeBuildCandidateRole
+        - Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:2.0
+        EnvironmentVariables:
+        - Name: CANDIDATES_BUCKET_NAME
+          Value:
+            Ref: CandidatesBucket
+        - Name: STAGE
+          Value:
+            Ref: Stage
+      Source:
+        Auth:
+          Type: OAUTH
+        BuildSpec: "version: 0.2\nphases:\n  install:\n    runtime-versions:\n   \
+          \   nodejs: 10            \n    commands:\n      - echo \">> Repo URL -\
+          \ ${CODEBUILD_SOURCE_REPO_URL}\"\n      - echo \">> Source ID (PR or CommitId)\
+          \ - ${CODEBUILD_RESOLVED_SOURCE_VERSION}\"\n      - echo \">> Webhook Actor\
+          \ Account ID - ${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID}\"\n      - echo \"\
+          >> Webhook Head Ref - ${CODEBUILD_WEBHOOK_HEAD_REF}\"\n      - echo \">>\
+          \ Webhook Base Ref - ${CODEBUILD_WEBHOOK_BASE_REF}\"\n      - echo \">>\
+          \ Webhook Event - ${CODEBUILD_WEBHOOK_EVENT}\"\n      - echo \">> Webhook\
+          \ Trigger - ${CODEBUILD_WEBHOOK_TRIGGER}\"\n      - echo \">> Installing\
+          \ sudo\"\n      - apt-get -y update && apt-get install -y sudo\n      -\
+          \ echo \">> installing yarn\"\n      - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg\
+          \ | sudo apt-key add -\n      - echo \"deb http://dl.yarnpkg.com/debian/\
+          \ stable main\" | sudo tee /etc/apt/sources.list.d/yarn.list\n      - sudo\
+          \ apt-get install -y yarn && rm -rf /var/lib/apt/lists/*\n  pre_build:\n\
+          \    commands:\n      - echo \">> Installing dependencies\"\n      - yarn\
+          \ --update-checksums # Update checksums in the yarn.lock lockfile if there\u2019\
+          s a mismatch between them and their package\u2019s checksum.\n      - yarn\
+          \ installServicesDeps\n  build:\n    commands:\n      - yarn build:codebuild\n\
+          \  post_build:\n    commands:         \n      - yarn zip:build\n      -\
+          \ echo \">> Copying candidate.zip to the bucket ${CANDIDATES_BUCKET_NAME}\"\
+          \n      - aws s3 cp candidate.zip s3://${CANDIDATES_BUCKET_NAME}/candidate.zip\
+          \ --metadata source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}\n"
+        GitCloneDepth: 1
+        Location:
+          Fn::Sub: https://github.com/${GithubOwner}/${GithubRepo}
+        ReportBuildStatus: true
+        Type: GITHUB
+      Triggers:
+        Webhook: true
+        FilterGroups:
+        - - Type: EVENT
+            Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED,
+              PULL_REQUEST_MERGED
+          - Type: BASE_REF
+            Pattern:
+              Fn::Sub: refs/heads/${GithubBranchName}$
+            ExcludeMatchedPattern: false
+        - - Type: EVENT
+            Pattern: PUSH
+          - Type: HEAD_REF
+            Pattern:
+              Fn::Sub: ^refs/heads/${GithubBranchName}$
+          - Type: FILE_PATH
+            Pattern: README.md
+            ExcludeMatchedPattern: true
