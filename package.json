@@ -30,11 +30,11 @@
     "webpack-cli": "^3.3.10"
   },
   "scripts": {
+    "preinitialize": "bash ./scripts/preinitialize",
     "docker:run": "yarn preinitialize && docker-compose run --rm serverless",
-    "docker:vault-run": "yarn preinitialize && aws-vault exec ${AWS_VAULT_PROFILE} -- docker-compose -f docker-compose.vault.yml run --rm serverless",
+    "docker:run:aws-vault": "export $(cat .env) && yarn preinitialize && aws-vault exec ${AWS_VAULT_PROFILE} -- docker-compose -f docker-compose.vault.yml run --rm serverless",
     "cleanup": "bash ./scripts/cleanup_buckets",
-    "preinitialize": "bash ./scripts/preinitalize",
-    "initialize": "yarn preinitalize && bash ./scripts/initialize",
+    "initialize": "bash ./scripts/initialize",
     "test": "jest --detectOpenHandles",
     "test:spec": "jest --detectOpenHandles --testNamePattern spec",
     "test:dev": "jest --detectOpenHandles --testNamePattern dev",
