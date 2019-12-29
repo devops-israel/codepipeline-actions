@@ -1,5 +1,5 @@
 #!/bin/bash
 ROOTDIR="${PWD}"
 cd layers
-yarn deploy
+yarn destroy
 cd "${ROOTDIR}"

@@ -1,17 +1,30 @@
 #!/bin/bash
+exists_bucket () {
+    local bucket_name=$1
+    aws s3api head-bucket --bucket "$bucket_name" 2>/dev/null;
+    echo $?
+}
+
 list_buckets_filter () {
     local filter=${1}
     buckets_list=$(aws s3api list-buckets)
     arr_string=$(echo "${buckets_list}" | jq --arg str "${filter}" -cr '.Buckets[] | select (.Name|test($str)) | .Name' | tr ' ' '\n')
-    echo $arr_string
+    echo "${arr_string}"
 }
 
 delete_bucket() {
     bucket_name=$1
-    aws s3api delete-bucket --bucket $bucket_name \
-        --region $AWS_REGION
-    if [[ $? -eq 0 ]]; then
-        echo "Successfully deleted the bucket: $bucket_name"
+    bucket_exists=$(exists_bucket "$bucket_name")
+    if [[ bucket_exists -eq 0 ]]; then
+        aws s3api delete-bucket --bucket $bucket_name \
+            --region $AWS_REGION
+        if [[ $? -eq 0 ]]; then
+            echo "\nSuccessfully deleted the bucket: $bucket_name"
+        else
+            echo "\nFailed to delete the bucket: $bucket_name"
+        fi
+    else
+        echo "\nNULL BUCKET: $bucket_name"
     fi
 }
 
@@ -22,21 +35,20 @@ delete_buckets () {
     arr=($(echo $arr_string))
     # Returns the first options that it found
     for bucket_name in "${arr[@]}"; do
-        delete_bucket $bucket_name
+        result=$(delete_bucket $bucket_name)
+        printf "${result}"
     done
 }
 
-filters_list=("${APP_NAME}-cpa-deployment-[a-z0-9]*-${STAGE}" \
-    "${APP_NAME}-candidates-[a-z0-9]*-${STAGE}" \
-    "${APP_NAME}-cpa-layers-deployment-[a-z0-9]*-${STAGE}" \
-    "${APP_NAME}-cpa-cfn-deployment-[a-z0-9]*-${STAGE}")
+filters_list=("${APP_NAME}-cpa-.*-${STAGE}")
+
 
 echo "The following buckets will be deleted: "
 count_buckets=0
 for filter in "${filters_list[@]}"; do
     buckets_list=$(list_buckets_filter "${filter}")
-    if [ ! -z $buckets_list ]; then
-        echo $buckets_list
+    if [[ ! -z $buckets_list ]]; then
+        printf "$buckets_list\n"
         count_buckets=($echo $(($count_buckets+1)))
     fi
 done
@@ -54,6 +66,6 @@ if [[ $answer != "yes" ]]; then
 else
     echo "Deleting buckets ..."
     for filter in "${filters_list[@]}"; do
-        echo $(delete_buckets "${filter}")
+        delete_buckets "${filter}"
     done
 fi
