@@ -30,6 +30,10 @@
     "webpack-cli": "^3.3.10"
   },
   "scripts": {
+    "cleanup": "bash ./scripts/cleanup_buckets",
+    "preinitialize": "bash ./scripts/preinitalize",
+    "initialize": "yarn preinitalize && bash ./scripts/initialize",
+    "initialize:aws-vault": "yarn preinitalize && bash ./scripts/initialize",
     "docker:run": "docker-compose run --rm serverless",
     "docker:vault-run": "aws-vault exec cpa-prod -- docker-compose -f docker-compose.vault.yml run --rm serverless",
     "test:vault": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_TESTING} -- jest --detectOpenHandles",
