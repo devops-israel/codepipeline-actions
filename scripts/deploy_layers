@@ -1,0 +1,6 @@
+#!/bin/bash
+ROOTDIR="${PWD}"
+[[ basedir "${PWD}" != "codepipeline-actions" ]] && echo "Please run the script from this project's root folder" && exit
+cd layers
+yarn deploy
+cd "${ROOTDIR}"
