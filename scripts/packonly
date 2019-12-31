@@ -64,25 +64,25 @@ while [ "$1" != "" ]; do
 done
 
 if [ -z $service_name ]; then
-    echo "Service name is required, provide it with the flag: -n service_name"
+    echo ">> Service name is required, provide it with the flag: -n service_name"
     exit
 fi
 
 
 if [ -z $s3_temp_bucket ]; then
-    echo "TEMP_CFN_TEMPLATES_BUCKET is empty. Please run: bash ./scripts/initialize"
+    echo ">> TEMP_CFN_TEMPLATES_BUCKET is empty. Please run: bash ./scripts/initialize"
     exit
 fi
 
 if [ -z $stage ]; then
-    echo "Stage is required, provide it with the flag: -s stage"
+    echo ">> Stage is required, provide it with the flag: -s stage"
     exit
 fi
 
 filename="$service_name.yml"
 infra_dir="./aws_resources"
 if [ ! -f "$infra_dir/$filename" ]; then
-    echo "File does not exist, make sure the service name matches the yml file name."
+    echo ">> File does not exist, make sure the service name matches the yml file name."
     exit
 fi
 
@@ -98,8 +98,8 @@ package_success=$(echo $package | grep "YOUR STACK NAME")
 
 if [ -z "${package_success}" ]; then
     echo "${package}"
-    echo "Failed to create package, fix the above."
+    echo ">> Failed to create package, fix the above."
     exit
 fi
 
-echo "Successfully created the package."
+echo ">> Successfully created the package."
