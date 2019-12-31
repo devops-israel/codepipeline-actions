@@ -24,6 +24,8 @@ Improve the use of CodePipeline by adding the following features:
 
 ### Installing
 
+`codepipeline-actions:` - means we're in this project's root folder
+
 Clone this repository
 
 ```
@@ -33,6 +35,9 @@ codepipeline-actions: git git@github.com:devops-internal/codepipeline-actions.gi
 ### Usage
 
 #### Run docker-compose container
+
+`codepipeline-actions:` - means we're in this project's root folder
+`bash-5.0#` - means we're in the container
 
 ```
 codepipeline-actions: yarn docker:run
@@ -45,11 +50,14 @@ bash-5.0:
 1. Installs dependencies for Lambda Layers and services (Lambda Functions)
 1. Creates two S3 buckets and updates `.env` file
 
-#### Slack App secrets
+#### Slack
 
+1. Create a Slack channel: `codepipeline_notifications`
 1. Create a [Slack application](https://api.slack.com/apps)
-1. Create a Slack Bot for your Slack application
-1. Update `.env` file with the values: `SLACK_SIGNING_SECRET` and `SLACK_BOT_OAUTH_TOKEN`
+1. Create a Slack Bot for your Slack application, and add the bot to your channel
+1. Update `.env` file with the values
+   - `SLACK_SIGNING_SECRET`
+   - `SLACK_BOT_OAUTH_TOKEN`
 
 #### Build and deploy
 
@@ -76,3 +84,15 @@ bash-5.0#
 #### Trigger a build
 
 Create a pull-request, from any branch to `develop` branch, now look at `codepipeline_notifications` channel in Slack
+
+## Troubleshooting
+
+### Forgot to update `.env` with Slack secrets
+
+No worries, update the `.env` file and then run:
+
+```
+bash-5.0#  yarn deploy:cpa
+```
+
+This will re-deploy the Lambda Functions (services) with the updated secrets.
