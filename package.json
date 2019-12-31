@@ -47,8 +47,11 @@
     "deploy:cpa": "export $(cat .env) && sls deploy --verbose --stage=${STAGE} --appname=${APP_NAME}",
     "deploy:codebuild": "export $(cat .env) && bash ./scripts/packndeploy --service_name codebuild",
     "deploy:codepipeline": "export $(cat .env) && bash ./scripts/packndeploy --service_name codepipeline",
+    "deploy:all": "yarn deploy:layers && yarn deploy:cpa && yarn deploy:codebuild && yarn deploy:codepipeline",
+    "destroy:aws_resources": "bash ./scripts/destroy_aws_resources",
     "destroy:cpa": "sls remove --verbose --stage=${STAGE} --appname=${APP_NAME}",
     "destroy:layers": "bash ./scripts/destroy_layers",
+    "destroy:all": "yarn destroy:cpa && yarn destroy:layers",
     "zip:build": "bash ./scripts/zipping_build",
     "cleanup": "yarn runInDocker && bash ./scripts/cleanup_buckets"
   },
