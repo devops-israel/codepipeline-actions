@@ -98,8 +98,8 @@ package_success=$(echo $package | grep "YOUR STACK NAME")
 
 if [ -z "${package_success}" ]; then
     echo "${package}"
-    echo ">> Failed to create package, fix the above."
+    echo ">> Failed to create template, fix the above."
     exit
 fi
 
-echo ">> Successfully created the package."
+echo ">> Successfully created the template for: $service_name"
