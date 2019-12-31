@@ -19,7 +19,7 @@ stage=${STAGE}
 s3_temp_bucket=${TEMP_CFN_TEMPLATES_BUCKET_NAME}
 src_bucket_name=${CANDIDATES_BUCKET_NAME}
 app_name=${APP_NAME}
-region=${REGION}
+region=${AWS_REGION}
 github_branch=${GITHUB_BRANCH}
 github_repo=${GITHUB_REPONAME}
 github_owner=${GITHUB_OWNER}
@@ -89,11 +89,11 @@ fi
 is_codebuild=$(echo "$filename" | grep "codebuild")
 is_codepipeline=$(echo "$filename" | grep "codepipeline")
 template_file_path="$infra_dir/templates/${app_name}-${service_name}-${stage}.template"
-rm -f $template_file_path
+rm -f "${template_file_path}"
 package=$(aws cloudformation package \
     --template-file "$infra_dir/${filename}" \
     --s3-bucket "${s3_temp_bucket}" \
---output-template-file $template_file_path)
+--output-template-file "${template_file_path}")
 package_success=$(echo $package | grep "YOUR STACK NAME")
 
 if [ -z "${package_success}" ]; then
