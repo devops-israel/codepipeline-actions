@@ -1,0 +1,3 @@
+#!/bin/bash
+echo ">> Go to Slack apps: https://api.slack.com/apps --> Select your app"
+echo ">> Go to Interactive Components --> Update Request URL with: ${API_GATEWAY_ENDPOINT}"

@@ -1,0 +1,24 @@
+#!/bin/bash
+set_env_var () {
+    local key=$1
+    local newvalue=$2
+    current_value=$(cat .env | grep ${key} | cut -d '=' -f 2)
+    if [[ $newvalue != $current_value ]]; then
+        # Replace only if different
+        current_keypair=$(cat .env | grep "$key")
+        if [ -z $current_keypair ]; then
+            current_keypair="${key}="
+        fi
+        echo "${key}=${newvalue}"
+        sed -i "s|${current_keypair}|${key}=${newvalue}|g" .env
+    fi
+}
+
+# Get API by ID
+api_gateway_app_name="${STAGE}-${APP_NAME}-cpa"
+rest_apis_list=$(aws apigateway get-rest-apis --region ${AWS_REGION})
+api_gateway_array=$(echo ${rest_apis_list} | jq -cr '.items')
+api_gateway_id=$(echo ${api_gateway_array} | jq --arg str '${api_gateway_app_name}' -cr '.[] | select(.name|=test($str)) | .id')
+api_gateway_endpoint="https://${api_gateway_id}.execute-api.${AWS_REGION}.amazonaws.com/${STAGE}/${API_GATEWAY_PATH}"
+
+set_env_var "API_GATEWAY_ENDPOINT" "${api_gateway_endpoint}"
