@@ -7,7 +7,7 @@ frameworkVersion: '>=1.1.0 <2.0.0'
 custom: '${file(serverless.vars.yml):vars}'
 provider:
   name: aws
-  runtime: ${self:custom.runtime.${self:provider.stage}}
+  runtime: ${self:custom.runtime}
   memorySize: ${self:custom.memory_size.${self:provider.stage}}
   stage: ${opt:stage}
   region: ${self:custom.region.${self:provider.stage}}
