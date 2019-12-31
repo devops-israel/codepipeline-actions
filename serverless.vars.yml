@@ -11,7 +11,7 @@ vars:
     dev: 192
     staging: 192
     prod: 192
-  runtime: nodejs10.x
+  runtime: nodejs12.x
 
   common_env_vars:
     REGION: '${self:custom.region.${self:provider.stage}}'
