@@ -12,7 +12,7 @@ functions:
       SLACK_POST_METADATA_BUCKET_NAME: ${env:SLACK_POST_METADATA_BUCKET_NAME}
       SLACK_POST_METADATA_FILE_NAME: ${env:SLACK_POST_METADATA_FILE_NAME}
       SLACK_POST_CHANNEL: ${env:SLACK_POST_CHANNEL}
-      SLACK_BOT_OAUTH_TOKEN: ${ssm:/codepipeline-actions/slack_bot_oauth_token~true} # ~true for SecuredString
+      SLACK_BOT_OAUTH_TOKEN: ${env:SLACK_BOT_OAUTH_TOKEN} # ${ssm:/codepipeline-actions/slack_bot_oauth_token~true} # ~true for SecuredString
 
   codepipelineSlackRelease:
     handler: index.handler
@@ -27,8 +27,8 @@ functions:
       CONDITION_FILENAME: ${env:CONDITION_FILENAME}
       REJECTED_BUCKET_NAME: ${env:REJECTED_BUCKET_NAME}
       REJECTED_FILE_NAME: ${env:REJECTED_FILE_NAME}
-      SLACK_SIGNING_SECRET: ${ssm:/codepipeline-actions/slack_signing_secret~true} # ~true for SecuredString
       CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME: ${env:CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME}
+      SLACK_SIGNING_SECRET: ${env:SLACK_SIGNING_SECRET} # ${ssm:/codepipeline-actions/slack_signing_secret~true} # ~true for SecuredString
 
   slackUpdateRelease:
     handler: index.handler
@@ -38,4 +38,4 @@ functions:
     layers:
       - ${env:AXIOS_LAYER_VERSION}
     environment:
-      SLACK_BOT_OAUTH_TOKEN: ${ssm:/codepipeline-actions/slack_bot_oauth_token~true} # ~true for SecuredString
+      SLACK_BOT_OAUTH_TOKEN: ${env:SLACK_BOT_OAUTH_TOKEN} # ${ssm:/codepipeline-actions/slack_bot_oauth_token~true} # ~true for SecuredString
