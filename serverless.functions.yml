@@ -19,8 +19,6 @@ functions:
     package:
       artifact: 'services/codepipeline-slack/dist/dist_codepipeline_slack.zip'
     role: processApprovalRole
-    layers:
-      - ${env:CRYPTO_LAYER_VERSION}
     events: ${file(serverless.custom.yml):processApprovalSlackReleaseEvents}
     environment:
       CONDITION_BUCKET_NAME: ${env:CONDITION_BUCKET_NAME}

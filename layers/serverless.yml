@@ -15,6 +15,3 @@ layers:
   cpa-axios:
     package:
       artifact: ./axios/axios.zip
-  cpa-crypto:
-    package:
-      artifact: ./crypto/crypto.zip
