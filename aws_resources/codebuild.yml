@@ -89,7 +89,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                nodejs: 10            
+                nodejs: 12
               commands:
                 - echo ">> Repo URL - ${CODEBUILD_SOURCE_REPO_URL}"
                 - echo ">> Source ID (PR or CommitId) - ${CODEBUILD_RESOLVED_SOURCE_VERSION}"
