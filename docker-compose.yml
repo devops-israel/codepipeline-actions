@@ -4,7 +4,7 @@ services:
     image: amaysim/serverless:1.60.0
     env_file:
       - .env
-    command: bash -c "yarn installAllDeps && bash"
+    command: bash -c "yarn installAllDeps && yarn initialize && bash"
     volumes:
       - ~/.aws:/root/.aws
       - ~/.ssh:/root/.ssh
