@@ -1,5 +1,26 @@
 #!/bin/bash
+set_env_var () {
+    local key=$1
+    local newvalue=$2
+    current_value=$(cat .env | grep ${key} | cut -d '=' -f 2)
+    if [[ $newvalue != $current_value ]]; then
+        # Replace only if different
+        current_keypair=$(cat .env | grep "$key")
+        if [ -z $current_keypair ]; then
+            current_keypair="${key}="
+        fi
+        echo "${key}=${newvalue}"
+        sed -i "s|${current_keypair}|${key}=${newvalue}|g" .env
+    fi
+}
+
 ROOTDIR="${PWD}"
 cd layers
 yarn deploy
 cd "${ROOTDIR}"
+
+# Set AXIOS and Crypto layer versions environment variable
+axios_layer_version=$(aws lambda list-layer-versions --region ${AWS_REGION} --layer-name cpa-axios | jq -r '.LayerVersions[0].LayerVersionArn')
+set_env_var "AXIOS_LAYER_VERSION" "$axios_layer_version"
+crypto_layer_version=$(aws lambda list-layer-versions --region ${AWS_REGION} --layer-name cpa-crypto | jq -r '.LayerVersions[0].LayerVersionArn')
+set_env_var "CRYPTO_LAYER_VERSION" "$crypto_layer_version"
