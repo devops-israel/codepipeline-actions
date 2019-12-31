@@ -25,6 +25,7 @@ Resources:
     Properties:
       VersioningConfiguration:
         Status: Enabled
+    DeletionPolicy: Delete
     # Omitted bucket name property, AWS will generate it automatically
 
   PipelineBucketBucketPolicy:
