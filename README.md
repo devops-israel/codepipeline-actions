@@ -47,17 +47,24 @@ bash-5.0:
 
 #### Slack App secrets
 
-1. Create [Slack application](https://api.slack.com/apps)
-1. Create Slack Bot
+1. Create a [Slack application](https://api.slack.com/apps)
+1. Create a Slack Bot for your Slack application
 1. Update `.env` file with the values: `SLACK_SIGNING_SECRET` and `SLACK_BOT_OAUTH_TOKEN`
 
 #### Build and deploy
+
+Run inside the running container
 
 ```
 bash-5.0#  yarn build
 ...
 bash-5.0#  yarn deploy:all
 ...
+>> Go to Slack apps: https://api.slack.com/apps --> Select your app
+>> Go to Interactive Components --> Update Request URL with:
+>> https://hashedstr.execute-api.eu-west-1.amazonaws.com/prod/codepipeline/release
+
+bash-5.0#
 ```
 
 1. Builds services (Lambda Functions) and outputs `dist` folder in each service
