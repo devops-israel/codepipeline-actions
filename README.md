@@ -6,15 +6,17 @@ Improve the use of CodePipeline by adding the following features:
 1. (Under development) Copy files according to condition
 1. (Under development) Automatically approve/reject Manual Approval step according to QA results
 
+**Note**: to shorten the resources' names, you'll sometimes see `cpa` instead of `codepipeline-actions`
+
 ## Getting Started
 
 ### Prerequisites
 
-The following apps must be installed on your machine:
-
+1. AWS user with Administrator privileges
+1. [yarn](https://yarnpkg.com/lang/en/docs/install/)
+1. [bash](https://www.gnu.org/software/bash/)
 1. [Docker](https://docs.docker.com/install/)
 1. [Docker Compose](https://docs.docker.com/compose/install/)
-1. [yarn](https://yarnpkg.com/lang/en/docs/install/)
 1. Integrate CodeBuild with your GitHub account
    - Create CodeBuild project
    - Source Provider: GitHub, Repository in my GitHub account and click Connect
@@ -38,9 +40,9 @@ codepipeline-actions: yarn docker:run
 bash-5.0:
 ```
 
-**[aws-vault](https://github.com/99designs/aws-vault) users** - Update `env` file with your AWS_VAULT_PROFILE and run `yarn docker:run:aws-vault`
+**[aws-vault](https://github.com/99designs/aws-vault) users** - Update `env` file with your `AWS_VAULT_PROFILE` and run `yarn docker:run:aws-vault`
 
-1. Installs dependencies for Lambda Layers and Services (Lambda Functions)
+1. Installs dependencies for Lambda Layers and services (Lambda Functions)
 1. Creates two S3 buckets and updates `.env` file
 
 #### Slack App secrets
@@ -57,6 +59,12 @@ bash-5.0#  yarn build
 bash-5.0#  yarn deploy:all
 ...
 ```
+
+1. Builds services (Lambda Functions) and outputs `dist` folder in each service
+1. Deploys lambda layers - [axios](https://www.npmjs.com/package/axios)
+1. Deploys services - Lambda Functions
+1. Deploys CodeBuild
+1. Deploys CodePipeline
 
 #### Trigger a build
 
