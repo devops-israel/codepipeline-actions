@@ -1,5 +1,5 @@
 const S3 = require('aws-sdk/clients/s3');
-const s3 = new S3({ apiVersion: '2006-03-01', region: process.env.AWS_REGION });
+const s3 = new S3({ apiVersion: '2006-03-01', region: process.env.AWS_REGION, signatureVersion: 'v4' });
 import { isBucketNameValid } from './controller';
 import { KeyedCollection } from './interfaces';
 

@@ -59,7 +59,7 @@ async function getTemplateParameters(event: any) {
     { key: 'ETag', value: s3object.Metadata['etag'] },
     { key: 'LinkGitHub', value: link_github },
     { key: 'SourceId', value: s3object.Metadata['source_id'] },
-    { key: 'VersionId', value: s3object.Metadata['versionid'] },
+    { key: 'VersionId', value: s3object.VersionId },
     { key: 'WebhookActorId', value: s3object.Metadata['webhook_actor'] },
     { key: 'WebhookBaseRef', value: s3object.Metadata['webhook_base_ref'] },
     { key: 'WebhookEvent', value: s3object.Metadata['webhook_event'] },
@@ -76,6 +76,15 @@ async function getTemplateParameters(event: any) {
       { key: 'Token', value: msg.approval.token },
       { key: 'ApprovalReviewLink', value: msg.approval.approvalReviewLink },
       { key: 'ApprovalExpirationDate', value: msg.approval.expires },
+    ]);
+  }
+
+  if (isCodeBuildEvent(event)) {
+    const build_status =
+      event['detail']['build-status'] === 'SUCCEEDED' ? ':heavy_check_mark: Succeeded' : ':x: Failed';
+    parameters_array = parameters_array.concat([
+      { key: 'BuildStatus', value: build_status },
+      { key: 'CodeBuildProjectName', value: event['detail']['project-name'] },
     ]);
   }
 
