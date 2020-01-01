@@ -6,7 +6,14 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "CodeBuild - Build Started:\n*<{LinkGitHub}|{WebhookTrigger} - {WebhookEvent}>*\n*Source ID*\n{SourceId}\n*Head Ref*\n{WebhookHeadRef}\n"
+        "text": ">*CodeBuild*: {CodeBuildProjectName}\n>*Build Status*: {BuildStatus}"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*<{LinkGitHub}|{WebhookTrigger} - {WebhookEvent}>*\n*Source ID*\n{SourceId}\n*Head Ref*\n{WebhookHeadRef}\n"
       },
       "accessory": {
         "type": "image",

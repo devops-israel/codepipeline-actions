@@ -6,14 +6,14 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "Approval request:\n*<{LinkGitHub}|{WebhookTrigger} - {WebhookEvent}>*"
+        "text": ">*CodePipeline*: {PipelineName}\n>*Stage Name*: {StageName}\n>*Action Name*: {ActionName}\n>*S3 Version ID*\n>{VersionId}"
       }
     },
     {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Source ID*\n{SourceId}\n*Head Ref*\n{WebhookHeadRef}\n"
+        "text": "*<{LinkGitHub}|{WebhookTrigger} - {WebhookEvent}>*\n*Source ID*\n{SourceId}\n*Head Ref*\n{WebhookHeadRef}\n\n"
       },
       "accessory": {
         "type": "image",
