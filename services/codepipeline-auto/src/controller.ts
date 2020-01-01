@@ -8,34 +8,34 @@ const rejected_bucket_name: string = process.env.REJECTED_BUCKET_NAME;
 const filename_to_remove: string = process.env.REJECTED_FILENAME;
 
 async function removeLatestVersion(bucketname: string, filename: string) {
-    return new BaseS3Object(bucketname, filename, null, filename).deleteObjectLatestVersion();
+  return new BaseS3Object(bucketname, filename, null, filename).deleteObjectLatestVersion();
 }
 
 export async function processApproval(event: SnsEvent) {
-    let params: ApprovalParams = await approvalCondition(event);
-    const promise = new Promise(function(resolve, reject) {
-        return codepipeline.putApprovalResult(params, async function(err: any, data: any) {
-            if (err) {
-                reject(err);
-            } else {
-                if (
-                    params.result.status === 'Rejected' &&
-                    typeof filename_to_remove == 'string' &&
-                    filename_to_remove.length > 0
-                ) {
-                    await removeLatestVersion(rejected_bucket_name, filename_to_remove);
-                }
-                resolve(data);
-            }
-        });
+  let params: ApprovalParams = await approvalCondition(event);
+  const promise = new Promise(function(resolve, reject) {
+    return codepipeline.putApprovalResult(params, async function(err: any, data: any) {
+      if (err) {
+        reject(err);
+      } else {
+        if (
+          params.result.status === 'Rejected' &&
+          typeof filename_to_remove == 'string' &&
+          filename_to_remove.length > 0
+        ) {
+          await removeLatestVersion(rejected_bucket_name, filename_to_remove);
+        }
+        resolve(data);
+      }
     });
-    return promise
-        .then(function(result) {
-            return result;
-        })
-        .catch(function(err) {
-            return err;
-        });
+  });
+  return promise
+    .then(function(result) {
+      return result;
+    })
+    .catch(function(err) {
+      return err;
+    });
 }
 
 export { SnsEvent } from '../../shared/src/interfaces';
