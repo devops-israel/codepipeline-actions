@@ -25,6 +25,10 @@ Parameters:
   CandidatesBucketName:
     Description: "Auto-created by yarn initialize"
     Type: String
+  MetadataBucketName:
+    Type: String
+  MetadataFileName:
+    Type: String
 
 Resources:
   CodeBuildCandidateRole:
@@ -81,6 +85,10 @@ Resources:
             Value: !Ref CandidatesBucketName
           - Name: STAGE
             Value: !Ref Stage
+          - Name: METADATA_BUCKET_NAME
+            Value: !Ref MetadataBucketName
+          - Name: METADATA_FILE_NAME
+            Value: !Ref MetadataFileName
       Source:
         Auth:
           Type: OAUTH
@@ -98,6 +106,9 @@ Resources:
                 - echo ">> Webhook Base Ref - ${CODEBUILD_WEBHOOK_BASE_REF}"
                 - echo ">> Webhook Event - ${CODEBUILD_WEBHOOK_EVENT}"
                 - echo ">> Webhook Trigger - ${CODEBUILD_WEBHOOK_TRIGGER}"
+                - echo ">> Copying ${METADATA_FILE_NAME} to the bucket ${METADATA_BUCKET_NAME}"
+                - touch ${METADATA_FILE_NAME}
+                - aws s3 cp ${METADATA_FILE_NAME} s3://${METADATA_BUCKET_NAME}/${METADATA_FILE_NAME} --metadata source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}                
                 - echo ">> Installing sudo"
                 - apt-get -y update && apt-get install -y sudo
                 - echo ">> installing yarn"

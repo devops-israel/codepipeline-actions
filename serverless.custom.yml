@@ -126,6 +126,23 @@ processApprovalSlackReleaseEvents:
       path: /codepipeline/release
       method: post
 
+codeBuildStatusEvent:
+  - cloudwatchEvent:
+      name: "${self:custom.appname}-cpa-build-started-${opt:stage}"
+      description: "Triggered upon status change of CodeBuildCandidate project"
+      event:
+        source:
+          - "aws.codebuild"
+        detail-type:
+          - "CodeBuild Build State Change"
+        detail:
+          project-name:
+            - ${self:custom.appname}-CodeBuildCandidate-${opt:stage}
+          # build-status:
+          #   - IN_PROGRESS
+          #   - SUCCEEDED
+          #   - FAILED
+
 # Outputs
 customOutputs:
   Outputs:

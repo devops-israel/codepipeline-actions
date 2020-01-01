@@ -16,7 +16,7 @@ elif [  ! -z $is_codebuild ]; then
         --region "${region}" \
         --template-file "${template_file_path}" \
         --stack-name "${app_name}-${service_name}-${stage}" \
-    --parameter-overrides AppName=$app_name Stage=$stage GithubBranchName=$github_branch GithubRepo=$github_repo GithubOwner=$github_owner CandidatesBucketName=$src_bucket_name)
+    --parameter-overrides AppName=$app_name Stage=$stage GithubBranchName=$github_branch GithubRepo=$github_repo GithubOwner=$github_owner CandidatesBucketName=$src_bucket_name MetadataBucketName=${SLACK_POST_METADATA_BUCKET_NAME} MetadataFileName=${SLACK_POST_METADATA_FILE_NAME})
 fi
 
 echo $deploy
