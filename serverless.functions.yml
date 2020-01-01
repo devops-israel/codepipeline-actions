@@ -1,4 +1,19 @@
 functions:
+  slackPostCodeBuildStatus:
+    handler: index.handler
+    events: ${file(serverless.custom.yml):codeBuildStatusEvent}
+    package:
+      artifact: 'services/slack-post/dist/dist_slack_post.zip'
+    role: sendSlackRole
+    layers:
+      - ${env:AXIOS_LAYER_VERSION}
+    environment:
+      SLACK_POST_METADATA_BUCKET_NAME: ${env:SLACK_POST_METADATA_BUCKET_NAME}
+      SLACK_POST_METADATA_FILE_NAME: ${env:SLACK_POST_METADATA_FILE_NAME}
+      SLACK_POST_TEMPLATE_PATH: './Template_CodeBuild.json'
+      SLACK_POST_CHANNEL: ${env:SLACK_POST_CHANNEL}
+      SLACK_BOT_OAUTH_TOKEN: ${env:SLACK_BOT_OAUTH_TOKEN} # ${ssm:/codepipeline-actions/slack_bot_oauth_token~true} # ~true for SecuredString
+
   slackPostRelease:
     handler: index.handler
     events: ${file(serverless.custom.yml):slackPostReleaseEvent}
@@ -37,3 +52,12 @@ functions:
       - ${env:AXIOS_LAYER_VERSION}
     environment:
       SLACK_BOT_OAUTH_TOKEN: ${env:SLACK_BOT_OAUTH_TOKEN} # ${ssm:/codepipeline-actions/slack_bot_oauth_token~true} # ~true for SecuredString
+
+  copyCandidate:
+    handler: index.handler
+    package:
+      artifact: 'services/copy-object/dist/dist_copy_object.zip'
+    role: copyObjectRole
+    environment:
+      OUTPUT_BUCKET_NAME: ${env:COPY_OBJECT_TARGET_BUCKET_NAME}
+      OUTPUT_FILENAME: ${env:COPY_OBJECT_TARGET_FILE_NAME}

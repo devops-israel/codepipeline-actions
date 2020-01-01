@@ -1,7 +1,7 @@
 #!/bin/bash
 ROOTDIR="${PWD}"
 servicesFolders=$(find ./services -maxdepth 1 -type d -exec bash -c '[ -f "$0"/package.json ] && [ -f "$0"/yarn.lock ]' '{}' \; -print | sort)
-servicesFolders=$(echo $servicesFolders | tr ' ' '\n' | grep -v "shared\|copy-object\|auto")
+servicesFolders=$(echo $servicesFolders | tr ' ' '\n' | grep -v "shared\|auto")
 
 echo $servicesFolders
 echo "Building the following services:" ; echo "$servicesFolders"

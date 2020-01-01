@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Description: |
   CodeBuild Template for aws-codepipeline-actions
 
@@ -15,67 +15,70 @@ Parameters:
     ConstraintDescription: Must be any of the available options
   GithubOwner:
     Type: String
-    Description: "Github repo owner"
+    Description: 'Github repo owner'
   GithubRepo:
     Type: String
-    Description: "Github repo name"
+    Description: 'Github repo name'
   GithubBranchName:
-    Description: "GitHub branch name"
+    Description: 'GitHub branch name'
     Type: String
-  CandidatesBucketName:
-    Description: "Auto-created by yarn initialize"
+  MetadataBucketName:
+    Type: String
+  MetadataFileName:
     Type: String
 
 Resources:
-  CodeBuildCandidateRole:
+  CodeBuildMetadataRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
               Service:
-                - "codebuild.amazonaws.com"
+                - 'codebuild.amazonaws.com'
             Action:
-              - "sts:AssumeRole"
+              - 'sts:AssumeRole'
       Path: /service-role/
       Policies:
         - PolicyName: root
           PolicyDocument:
-            Version: "2012-10-17"
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
-                  - "s3:PutObject"
+                  - 's3:PutObject'
                 Resource:
-                  - !Sub "arn:aws:s3:::${CandidatesBucketName}/*"
+                  - !Sub 'arn:aws:s3:::${MetadataBucketName}/*'
               - Effect: Allow
                 Action:
-                  - "logs:CreateLogGroup"
-                  - "logs:CreateLogStream"
-                  - "logs:PutLogEvents"
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
                 Resource:
-                  - "*"
+                  - '*'
 
-  # Creates candidate.zip
-  CodeBuildCandidate:
-    Type: "AWS::CodeBuild::Project"
+  # Creates candidate_metadata.nfo
+  CodeBuildMetadataFile:
+    Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${AppName}-CodeBuildCandidate-${Stage}
-      ServiceRole: !GetAtt CodeBuildCandidateRole.Arn
+      Name: !Sub ${AppName}-cpa-CodeBuildMetadata-${Stage}
+      ServiceRole: !GetAtt CodeBuildMetadataRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
         # Linux container with node installed
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:3.0"
+        Image: 'aws/codebuild/standard:3.0'
         EnvironmentVariables:
-          - Name: CANDIDATES_BUCKET_NAME
-            Value: !Ref CandidatesBucketName
           - Name: STAGE
             Value: !Ref Stage
+          - Name: METADATA_BUCKET_NAME
+            Value: !Ref MetadataBucketName
+          - Name: METADATA_FILE_NAME
+            Value: !Ref MetadataFileName
       Source:
         Auth:
           Type: OAUTH
@@ -93,27 +96,14 @@ Resources:
                 - echo ">> Webhook Base Ref - ${CODEBUILD_WEBHOOK_BASE_REF}"
                 - echo ">> Webhook Event - ${CODEBUILD_WEBHOOK_EVENT}"
                 - echo ">> Webhook Trigger - ${CODEBUILD_WEBHOOK_TRIGGER}"
-                - echo ">> Installing sudo"
-                - apt-get -y update && apt-get install -y sudo
-                - echo ">> installing yarn"
-                - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-                - echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-                - sudo apt-get install -y yarn && rm -rf /var/lib/apt/lists/*
-            pre_build:
-              commands:
-                - echo ">> Installing dependencies"
-                - yarn --update-checksums # Update checksums in the yarn.lock lockfile if there’s a mismatch between them and their package’s checksum.
-                - yarn installServicesDeps
+                - echo ">> Creating ${METADATA_FILE_NAME} locally"
+                - touch ${METADATA_FILE_NAME}
             build:
               commands:
-                - yarn build
-            post_build:
-              commands:         
-                - yarn zip:build
-                - echo ">> Copying candidate.zip to the bucket ${CANDIDATES_BUCKET_NAME}"
-                - aws s3 cp candidate.zip s3://${CANDIDATES_BUCKET_NAME}/candidate.zip --metadata source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}
+                - echo ">> Copying ${METADATA_FILE_NAME} to the bucket ${METADATA_BUCKET_NAME}"
+                - aws s3 cp ${METADATA_FILE_NAME} s3://${METADATA_BUCKET_NAME}/${METADATA_FILE_NAME} --metadata source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}
         GitCloneDepth: 1
-        Location: !Sub "https://github.com/${GithubOwner}/${GithubRepo}"
+        Location: !Sub 'https://github.com/${GithubOwner}/${GithubRepo}'
         ReportBuildStatus: true
         Type: GITHUB
       Triggers:
@@ -122,12 +112,12 @@ Resources:
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED, PULL_REQUEST_MERGED
             - Type: BASE_REF
-              Pattern: !Sub "refs/heads/${GithubBranchName}$"
+              Pattern: !Sub 'refs/heads/${GithubBranchName}$'
               ExcludeMatchedPattern: false
           - - Type: EVENT
               Pattern: PUSH
             - Type: HEAD_REF
-              Pattern: !Sub "^refs/heads/${GithubBranchName}$"
+              Pattern: !Sub '^refs/heads/${GithubBranchName}$'
             - Type: FILE_PATH
               Pattern: README.md
               ExcludeMatchedPattern: true
