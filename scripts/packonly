@@ -87,6 +87,7 @@ if [ ! -f "$infra_dir/$filename" ]; then
 fi
 
 is_codebuild=$(echo "$filename" | grep "codebuild")
+is_codebuild_metadata=$(echo "$filename" | grep "codebuild-metadata")
 is_codepipeline=$(echo "$filename" | grep "codepipeline")
 template_file_path="$infra_dir/templates/${app_name}-${service_name}-${stage}.template"
 rm -f "${template_file_path}"

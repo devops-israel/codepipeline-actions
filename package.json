@@ -49,6 +49,7 @@
     "deploy:cpa": "export $(cat .env) && yarn set:layerversion && export $(cat .env) && sls deploy --verbose --stage=${STAGE} --appname=${APP_NAME} && bash ./scripts/set_apigw_endpoint && yarn deploy:cpa:msg",
     "deploy:cpa:msg": "export $(cat .env) && bash ./scripts/msg_deploy_cpa",
     "deploy:codebuild": "export $(cat .env) && bash ./scripts/packndeploy --service_name codebuild",
+    "deploy:codebuild:metadata": "export $(cat .env) && bash ./scripts/packndeploy --service_name codebuild-metadata",
     "deploy:codepipeline": "export $(cat .env) && bash ./scripts/packndeploy --service_name codepipeline",
     "deploy:all": "yarn deploy:layers && yarn deploy:cpa && yarn deploy:codebuild && yarn deploy:codepipeline && yarn deploy:cpa:msg",
     "destroy:aws_resources": "bash ./scripts/destroy_aws_resources",
