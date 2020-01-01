@@ -17,7 +17,7 @@ async function getGithubDetails(actor_id: string) {
       return details.data;
     })
     .catch(function(error) {
-      return error;
+      return { name: 'Manual-Invocation', avatar_url: 'https://picsum.photos/536/354', error: error };
     });
 }
 
@@ -32,7 +32,7 @@ function setGithubLink(s3object: any) {
 }
 
 function isCodeBuildEvent(event: any): boolean {
-  if (event['source'] === 'aws.codebuild') {
+  if (event['source'] && event['source'] === 'aws.codebuild') {
     return true;
   } else {
     return false;
@@ -48,7 +48,7 @@ function isSnsEvent(event: any): boolean {
 }
 
 async function getTemplateParameters(event: any) {
-  let parameters_array: Object[] = [];
+  let parameters_array: any[] = [];
   const s3object = await getS3Object(slack_post_metadata_file_name, slack_post_metadata_bucket_name);
   let link_github = setGithubLink(s3object);
   const github_details = await getGithubDetails(s3object.Metadata['webhook_actor']);
@@ -66,10 +66,10 @@ async function getTemplateParameters(event: any) {
     { key: 'WebhookHeadRef', value: s3object.Metadata['webhook_head_ref'] },
     { key: 'WebhookTrigger', value: s3object.Metadata['webhook_trigger'] },
   ];
-  parameters_array.concat(s3_metadata);
+  parameters_array = parameters_array.concat(s3_metadata);
   if (isSnsEvent(event)) {
     const msg = JSON.parse(event['Records'][0]['Sns']['Message']);
-    parameters_array.concat([
+    parameters_array = parameters_array.concat([
       { key: 'PipelineName', value: msg.approval.pipelineName },
       { key: 'ActionName', value: msg.approval.actionName },
       { key: 'StageName', value: msg.approval.stageName },
@@ -77,11 +77,9 @@ async function getTemplateParameters(event: any) {
       { key: 'ApprovalReviewLink', value: msg.approval.approvalReviewLink },
       { key: 'ApprovalExpirationDate', value: msg.approval.expires },
     ]);
-  } else if (isCodeBuildEvent(event)) {
-    parameters_array.concat([{ key: 'BuildStatus', value: event['detail']['build-status'] }]);
   }
 
-  parameters_array.concat([
+  parameters_array = parameters_array.concat([
     { key: 'Stage', value: stage },
     { key: 'Channel', value: slack_post_channel },
   ]);

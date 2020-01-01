@@ -6,19 +6,12 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "CodeBuild info:\n*<{LinkGitHub}|{WebhookTrigger} - {WebhookEvent}>*\n{BuildStatus}"
+        "text": "CodeBuild - Build Started:\n*<{LinkGitHub}|{WebhookTrigger} - {WebhookEvent}>*\n*Source ID*\n{SourceId}\n*Head Ref*\n{WebhookHeadRef}\n"
       },
       "accessory": {
         "type": "image",
         "image_url": "{GitHubAvatar}",
         "alt_text": "GitHubAvatar"
-      }
-    },
-    {
-      "type": "section",
-      "text": {
-        "type": "mrkdwn",
-        "text": "*Source ID*\n{SourceId}\n*Head Ref*\n{WebhookHeadRef}\n"
       }
     },
     {
