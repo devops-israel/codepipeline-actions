@@ -131,5 +131,5 @@ Resources:
                 Provider: Lambda
                 Version: "1"
               Configuration:
-                FunctionName: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AppName}-${Stage}-copyCandidate"
+                FunctionName: !Sub "${AppName}-${Stage}-copyCandidate"
               RunOrder: 1
