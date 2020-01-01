@@ -1,6 +1,6 @@
 #!/bin/bash
 ROOTDIR="${PWD}"
 servicesFolders=$(find ./services -maxdepth 1 -type d -exec bash -c '[ -f "$0"/package.json ] && [ -f "$0"/yarn.lock ]' '{}' \; -print | sort)
-servicesFolders=$(echo $servicesFolders | tr ' ' '\n' | grep -v "shared\|auto")
+servicesFolders=$(echo $servicesFolders | tr ' ' '\n' | grep -v "shared")
 echo "Installing dependencies for the following services:" ; echo "$servicesFolders"
 for folder in ${servicesFolders}; do cd $folder; echo ">> Installing deps of $folder"; yarn install ; cd "${ROOTDIR}"; done

@@ -6,6 +6,11 @@ customResources:
       Properties:
         TopicName: ${self:custom.appname}-ReleaseSNSTopic-${self:provider.stage}
 
+    AutoQaSNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.appname}-cpa-AutoQaSNSTopic-${self:provider.stage}
+
     # Roles
     sendSlackRole:
       Type: AWS::IAM::Role
@@ -79,6 +84,15 @@ customResources:
                 - Effect: Allow
                   Action: 'lambda:InvokeFunction'
                   Resource: '*'
+                - Effect: Allow
+                  Action: 's3:*'
+                  Resource:
+                    - 'arn:aws:s3:::${env:REJECTED_BUCKET_NAME}'
+                    - 'arn:aws:s3:::${env:REJECTED_BUCKET_NAME}/*'
+                    - 'arn:aws:s3:::${env:CONDITION_BUCKET_NAME}'
+                    - 'arn:aws:s3:::${env:CONDITION_BUCKET_NAME}/*'
+                    - 'arn:aws:s3:::${env:SLACK_POST_METADATA_BUCKET_NAME}'
+                    - 'arn:aws:s3:::${env:SLACK_POST_METADATA_BUCKET_NAME}/*'
 
     copyObjectRole:
       Type: AWS::IAM::Role
@@ -140,9 +154,17 @@ codeBuildStatusEvent:
             - ${self:custom.appname}-cpa-CodeBuildMetadata-${opt:stage}
           build-status:
             - SUCCEEDED
+            - FAILED
+
+autoQaApprovalEvent:
+  - sns:
+      arn: !Ref AutoQaSNSTopic
+      topicName: ${self:custom.appname}-cpa-AutoQaSNSTopic-${self:provider.stage}
 
 # Outputs
 customOutputs:
   Outputs:
     ReleaseSNSTopicArn:
       Value: !Ref ReleaseSNSTopic
+    AutoQaSNSTopicArn:
+      Value: !Ref AutoQaSNSTopic

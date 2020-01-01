@@ -61,3 +61,18 @@ functions:
     environment:
       OUTPUT_BUCKET_NAME: ${env:COPY_OBJECT_TARGET_BUCKET_NAME}
       OUTPUT_FILENAME: ${env:COPY_OBJECT_TARGET_FILE_NAME}
+
+  codepipelineAutoQa:
+    handler: index.handler
+    package:
+      artifact: 'services/codepipeline-auto/dist/dist_codepipeline_auto.zip'
+    role: processApprovalRole
+    events: ${file(serverless.custom.yml):autoQaApprovalEvent}
+    environment:
+      CONDITION_BUCKET_NAME: ${env:SLACK_POST_METADATA_BUCKET_NAME}
+      CONDITION_FILENAME: qa_results.html
+      CONDITION_METADATA_PROPERTY: qa_status
+      CONDITION_METADATA_SUCCESS: success
+      REJECTED_BUCKET_NAME: ''
+      REJECTED_FILE_NAME: ''
+      CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME: ${env:CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME}

@@ -60,7 +60,7 @@ Resources:
                   - '*'
 
   # Creates candidate_metadata.nfo
-  CodeBuildMetadataFile:
+  CodeBuildMetadata:
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: !Sub ${AppName}-cpa-CodeBuildMetadata-${Stage}
@@ -101,7 +101,7 @@ Resources:
             build:
               commands:
                 - echo ">> Copying ${METADATA_FILE_NAME} to the bucket ${METADATA_BUCKET_NAME}"
-                - aws s3 cp ${METADATA_FILE_NAME} s3://${METADATA_BUCKET_NAME}/${METADATA_FILE_NAME} --metadata source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}
+                - aws s3 cp ${METADATA_FILE_NAME} s3://${METADATA_BUCKET_NAME}/${METADATA_FILE_NAME} --metadata qa_status=success,source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}
         GitCloneDepth: 1
         Location: !Sub 'https://github.com/${GithubOwner}/${GithubRepo}'
         ReportBuildStatus: true
