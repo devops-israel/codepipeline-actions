@@ -3,7 +3,7 @@ functions:
     handler: index.handler
     events: ${file(serverless.custom.yml):slackPostReleaseEvent}
     package:
-      artifact: 'services/slack-post/dist/dist_slack_post.zip'
+      artifact: "services/slack-post/dist/dist_slack_post.zip"
     role: sendSlackRole
     layers:
       - ${env:AXIOS_LAYER_VERSION}
@@ -17,7 +17,7 @@ functions:
   codepipelineSlackRelease:
     handler: index.handler
     package:
-      artifact: 'services/codepipeline-slack/dist/dist_codepipeline_slack.zip'
+      artifact: "services/codepipeline-slack/dist/dist_codepipeline_slack.zip"
     role: processApprovalRole
     events: ${file(serverless.custom.yml):processApprovalSlackReleaseEvents}
     environment:
@@ -31,9 +31,18 @@ functions:
   slackUpdateRelease:
     handler: index.handler
     package:
-      artifact: 'services/slack-update/dist/dist_slack_update.zip'
+      artifact: "services/slack-update/dist/dist_slack_update.zip"
     role: sendSlackRole
     layers:
       - ${env:AXIOS_LAYER_VERSION}
     environment:
       SLACK_BOT_OAUTH_TOKEN: ${env:SLACK_BOT_OAUTH_TOKEN} # ${ssm:/codepipeline-actions/slack_bot_oauth_token~true} # ~true for SecuredString
+
+  copyCandidate:
+    handler: index.handler
+    package:
+      artifact: "services/copy-object/dist/dist_copy_object.zip"
+    role: copyObjectRole
+    environment:
+      OUTPUT_BUCKET_NAME: ${env:COPY_OBJECT_TARGET_BUCKET_NAME}
+      OUTPUT_FILENAME: ${env:COPY_OBJECT_TARGET_FILE_NAME}

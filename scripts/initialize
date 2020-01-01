@@ -90,6 +90,10 @@ handle_bucket "CANDIDATES_BUCKET_NAME" \
     "cpa-candidates" \
     "versioning"
 
+handle_bucket "COPY_OBJECT_TARGET_BUCKET_NAME" \
+    "cpa-testedcandidates" \
+    "versioning"
+
 handle_bucket "TEMP_CFN_TEMPLATES_BUCKET_NAME" \
     "cpa-cfn-templates"
 
