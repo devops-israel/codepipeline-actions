@@ -111,7 +111,8 @@ customResources:
                 - Effect: Allow
                   Action:
                     - "s3:*"
-                    - "codepipeline:PutApprovalResult"
+                    - "codepipeline:PutJobFailureResult"
+                    - "codepipeline:PutJobSuccessResult"
                   Resource: "*"
 
 # Events
