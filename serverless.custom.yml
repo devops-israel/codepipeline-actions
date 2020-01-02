@@ -129,6 +129,41 @@ customResources:
                     - 'codepipeline:PutJobSuccessResult'
                   Resource: '*'
 
+    slackUploadFileRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: root
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:logs'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - s3:GetObject
+                    - s3:GetObjectVersion
+                    - s3:GetBucketVersioning
+                  Resource: '*'
+
 # Events
 slackPostReleaseEvent:
   - sns:

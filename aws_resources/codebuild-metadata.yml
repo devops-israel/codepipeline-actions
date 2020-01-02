@@ -97,7 +97,7 @@ Resources:
                 - echo ">> Webhook Event - ${CODEBUILD_WEBHOOK_EVENT}"
                 - echo ">> Webhook Trigger - ${CODEBUILD_WEBHOOK_TRIGGER}"
                 - echo ">> Creating ${METADATA_FILE_NAME} locally"
-                - touch ${METADATA_FILE_NAME}
+                - echo "my qa results" > ${METADATA_FILE_NAME}
             build:
               commands:
                 - echo ">> Copying ${METADATA_FILE_NAME} to the bucket ${METADATA_BUCKET_NAME}"

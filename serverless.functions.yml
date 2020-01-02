@@ -70,9 +70,24 @@ functions:
     events: ${file(serverless.custom.yml):autoQaApprovalEvent}
     environment:
       CONDITION_BUCKET_NAME: ${env:SLACK_POST_METADATA_BUCKET_NAME}
-      CONDITION_FILENAME: qa_results.html
+      CONDITION_FILENAME: qa-results.html
       CONDITION_METADATA_PROPERTY: qa_status
       CONDITION_METADATA_SUCCESS: success
       REJECTED_BUCKET_NAME: ''
       REJECTED_FILE_NAME: ''
-      CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME: ${env:CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME}
+      CODEPIPELINE_AUTO_INVOKE_LAMBDA_FUNCTION_NAME: ${env:CODEPIPELINE_AUTO_INVOKE_LAMBDA_FUNCTION_NAME}
+
+  slackUploadQaResults:
+    handler: index.handler
+    package:
+      artifact: 'services/slack-uploadfile/dist/dist_slack_uploadfile.zip'
+    role: slackUploadFileRole
+    layers:
+      - ${env:AXIOS_LAYER_VERSION}
+      - ${env:FORMDATA_LAYER_VERSION}
+    environment:
+      SLACK_UPLOAD_CHANNEL: ${env:SLACK_POST_CHANNEL}
+      SLACK_BOT_OAUTH_TOKEN: ${env:SLACK_BOT_OAUTH_TOKEN}
+      SLACK_UPLOAD_BUCKET_NAME: ${env:SLACK_UPLOAD_BUCKET_NAME}
+      SLACK_UPLOAD_FILE_NAME: qa-results.html
+      SLACK_UPLOAD_MESSAGE: ':x: AutoQa Results - Failed\nDownload the results and open in browser'
