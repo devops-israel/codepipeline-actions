@@ -28,10 +28,3 @@ export function getS3Object(key: string, bucket_name: any) {
   }
   return new BaseS3Object(bucket_name, key).getObject();
 }
-
-export function getS3ObjectStream(key: string, bucket_name: any) {
-  if (!isBucketNameValid(bucket_name)) {
-    throw new Error('Invalid bucket name');
-  }
-  return new BaseS3Object(bucket_name, key).getObjectStream();
-}
