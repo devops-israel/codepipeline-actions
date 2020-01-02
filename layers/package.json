@@ -1,5 +1,5 @@
 {
-  "name": "aws-codepipeline-actions",
+  "name": "codepipeline-actions-layers-axios",
   "version": "0.1.0",
   "author": "Meir Gabay <unfor19@gmail.com>",
   "license": "MIT",

@@ -1,10 +1,10 @@
 {
-  "name": "codepipeline-actions-layers-axios",
+  "name": "codepipeline-actions-layers-formdata",
   "license": "MIT",
   "version": "0.1.0",
   "author": "Meir Gabay <unfor19@gmail.com>",
   "dependencies": {
-    "axios": "^0.19.0"
+    "form-data": "^3.0.0"
   },
   "scripts": {
     "addlayer": "yarn install --modules-folder ./node_modules"

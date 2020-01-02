@@ -76,7 +76,7 @@ handle_bucket () {
 }
 
 # set account number if empty
-[[ -z $AWS_ACCOUNT_NUMBER ]] && set_env_var 'AWS_ACCOUNT_NUMBER' $(get_account_number)
+# [[ -z $AWS_ACCOUNT_NUMBER ]] && set_env_var 'AWS_ACCOUNT_NUMBER' $(get_account_number)
 
 # handle_bucket "CODEPIPELINE_ACTIONS_DEPLOYMENT_BUCKET_NAME" \
 #     "cpa-deployment" \
@@ -100,6 +100,12 @@ handle_bucket "TEMP_CFN_TEMPLATES_BUCKET_NAME" \
 set_env_var "CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME" \
     "${APP_NAME}-cpa-${STAGE}-slackUpdateRelease"
 
+set_env_var "CODEPIPELINE_AUTO_INVOKE_LAMBDA_FUNCTION_NAME" \
+    "${APP_NAME}-cpa-${STAGE}-slackUploadQaResults"
+
 export $(cat .env | grep "")
 set_env_var "SLACK_POST_METADATA_BUCKET_NAME" \
+    $(echo $(cat .env | grep 'CANDIDATES_BUCKET_NAME' | cut -d '=' -f 2))
+
+set_env_var "SLACK_UPLOAD_BUCKET_NAME" \
     $(echo $(cat .env | grep 'CANDIDATES_BUCKET_NAME' | cut -d '=' -f 2))

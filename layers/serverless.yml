@@ -2,9 +2,9 @@ service: ${self:custom.appname}-cpa-layers
 package:
   individually: true
 
-frameworkVersion: '>=1.1.0 <2.0.0'
+frameworkVersion: ">=1.1.0 <2.0.0"
 
-custom: '${file(../serverless.vars.yml):vars}'
+custom: "${file(../serverless.vars.yml):vars}"
 provider:
   name: aws
   runtime: ${self:custom.runtime}
@@ -15,3 +15,7 @@ layers:
   cpa-axios:
     package:
       artifact: ./axios/axios.zip
+
+  cpa-formdata:
+    package:
+      artifact: ./formdata/formdata.zip
