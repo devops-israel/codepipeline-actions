@@ -11,11 +11,4 @@ provider:
   memorySize: ${self:custom.memory_size.${self:provider.stage}}
   stage: ${opt:stage}
   region: ${env:AWS_REGION}
-layers:
-  cpa-axios:
-    package:
-      artifact: ./axios/axios.zip
-
-  cpa-formdata:
-    package:
-      artifact: ./formdata/formdata.zip
+layers: ${self:custom.layers.${self:provider.stage}}

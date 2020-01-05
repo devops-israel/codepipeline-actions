@@ -14,7 +14,7 @@ set_env_var () {
     fi
 }
 
-axios_layer_version=$(aws lambda list-layer-versions --region ${AWS_REGION} --layer-name cpa-axios | jq -r '.LayerVersions[0].LayerVersionArn')
-formdata_layer_version=$(aws lambda list-layer-versions --region ${AWS_REGION} --layer-name cpa-formdata | jq -r '.LayerVersions[0].LayerVersionArn')
+axios_layer_version=$(aws lambda list-layer-versions --region ${AWS_REGION} --layer-name ${STAGE}-cpa-axios | jq -r '.LayerVersions[0].LayerVersionArn')
+formdata_layer_version=$(aws lambda list-layer-versions --region ${AWS_REGION} --layer-name ${STAGE}-cpa-formdata | jq -r '.LayerVersions[0].LayerVersionArn')
 set_env_var "AXIOS_LAYER_VERSION" "$axios_layer_version"
 set_env_var "FORMDATA_LAYER_VERSION" "$formdata_layer_version"

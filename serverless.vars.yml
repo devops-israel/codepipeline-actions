@@ -8,6 +8,28 @@ vars:
     staging: 192
     prod: 192
   runtime: nodejs12.x
+  layers:
+    dev:
+      dev-cpa-axios:
+        package:
+          artifact: ./axios/axios.zip
+      dev-cpa-formdata:
+        package:
+          artifact: ./formdata/formdata.zip
+    staging:
+      staging-cpa-axios:
+        package:
+          artifact: ./axios/axios.zip
+      staging-cpa-formdata:
+        package:
+          artifact: ./formdata/formdata.zip
+    prod:
+      prod-cpa-axios:
+        package:
+          artifact: ./axios/axios.zip
+      prod-cpa-formdata:
+        package:
+          artifact: ./formdata/formdata.zip
 
   common_env_vars:
     REGION: '${env:AWS_REGION}'
