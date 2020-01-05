@@ -86,13 +86,13 @@ handle_bucket () {
 #     "cpa-layers-deployment" \
 #     "versioning"
 
-# handle_bucket "CANDIDATES_BUCKET_NAME" \
-#     "cpa-candidates" \
-#     "versioning"
+handle_bucket "CANDIDATES_BUCKET_NAME" \
+    "cpa-candidates" \
+    "versioning"
 
-# handle_bucket "COPY_OBJECT_TARGET_BUCKET_NAME" \
-#     "cpa-testedcandidates" \
-#     "versioning"
+handle_bucket "COPY_OBJECT_TARGET_BUCKET_NAME" \
+    "cpa-testedcandidates" \
+    "versioning"
 
 handle_bucket "TEMP_CFN_TEMPLATES_BUCKET_NAME" \
     "cpa-cfn-templates"
@@ -102,3 +102,10 @@ set_env_var "CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME" \
 
 set_env_var "CODEPIPELINE_AUTO_INVOKE_LAMBDA_FUNCTION_NAME" \
     "${APP_NAME}-cpa-${STAGE}-slackUploadQaResults"
+
+export $(cat .env | grep "")
+set_env_var "SLACK_POST_METADATA_BUCKET_NAME" \
+    $(echo $(cat .env | grep 'CANDIDATES_BUCKET_NAME' | cut -d '=' -f 2))
+
+set_env_var "SLACK_UPLOAD_BUCKET_NAME" \
+    $(echo $(cat .env | grep 'CANDIDATES_BUCKET_NAME' | cut -d '=' -f 2))
