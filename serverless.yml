@@ -10,7 +10,7 @@ provider:
   runtime: ${self:custom.runtime}
   memorySize: ${self:custom.memory_size.${self:provider.stage}}
   stage: ${opt:stage}
-  region: ${self:custom.region.${self:provider.stage}}
+  region: ${env:AWS_REGION}
   environment: ${file(serverless.vars.yml):vars.common_env_vars}
   iamRoleStatements:
     - Effect: Allow

@@ -2,11 +2,7 @@
 # And of course do whatever changes you need so it fits your infrastructure
 vars:
   appname: ${opt:appname}
-  account_number: ${env:AWS_ACCOUNT_NUMBER}
-  region:
-    dev: eu-west-1
-    staging: eu-west-1
-    prod: eu-west-1
+  region: ${env:AWS_REGION}
   memory_size:
     dev: 192
     staging: 192
@@ -14,5 +10,5 @@ vars:
   runtime: nodejs12.x
 
   common_env_vars:
-    REGION: '${self:custom.region.${self:provider.stage}}'
+    REGION: '${env:AWS_REGION}'
     STAGE: '${opt:stage}'
