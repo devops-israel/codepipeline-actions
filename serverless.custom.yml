@@ -186,7 +186,7 @@ codeBuildStatusEvent:
           - 'CodeBuild Build State Change'
         detail:
           project-name:
-            - ${self:custom.appname}-cpa-CodeBuildMetadata-${opt:stage}
+            - ${env:CODEBUILD_PROJECT_NAME}
           build-status:
             - SUCCEEDED
             - FAILED
