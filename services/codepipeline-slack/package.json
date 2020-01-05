@@ -37,6 +37,7 @@
     "test:vault": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_TESTING} -- jest --detectOpenHandles",
     "test:aws": "jest --detectOpenHandles",
     "build:prod": "webpack --config webpack.config.js --mode production",
+    "build:staging": "webpack --config webpack.config.js --mode production",
     "build:dev": "webpack --config webpack.config.js --mode development",
     "deploy:vault-dev": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_DEV} -- sls deploy --verbose --stage=dev",
     "deploy:vault-staging": "export $(cat .env) && aws-vault exec ${VAULT_PROFILE_STAGING} -- sls deploy --verbose --stage=staging",
