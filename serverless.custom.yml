@@ -182,7 +182,7 @@ slackPostFinalApprovalEvent:
 
 processApprovalSlackReleaseEvents:
   - http:
-      path: /codepipeline/release
+      path: ${env:API_GATEWAY_PATH}
       method: post
 
 codeBuildStatusEvent:
