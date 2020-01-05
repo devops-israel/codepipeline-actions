@@ -96,3 +96,8 @@ bash-5.0#  yarn deploy:cpa
 ```
 
 This will re-deploy the Lambda Functions (services) with the updated secrets.
+
+### Not getting Approval messages in Slack
+
+If you updated the SNS-Topic, then the link to it in CodePipeline might be broken.
+Re-deploy CodePipeline with a different SNS-Topic, and then re-deploy CodePipeline with the corrent SNS-Topic.
