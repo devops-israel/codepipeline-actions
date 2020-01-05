@@ -91,3 +91,18 @@ functions:
       SLACK_UPLOAD_BUCKET_NAME: ${env:SLACK_UPLOAD_BUCKET_NAME}
       SLACK_UPLOAD_FILE_NAME: ${env:SLACK_UPLOAD_FILE_NAME}
       SLACK_UPLOAD_MESSAGE: ':x: AutoQa Results - Failed\nDownload the results and open in browser'
+
+  slackPostFinalApproval:
+    handler: index.handler
+    events: ${file(serverless.custom.yml):slackPostFinalApprovalEvent}
+    package:
+      artifact: 'services/slack-post/dist/dist_slack_post.zip'
+    role: sendSlackRole
+    layers:
+      - ${env:AXIOS_LAYER_VERSION}
+    environment:
+      SLACK_POST_TEMPLATE_PATH: ${env:SLACK_POST_TEMPLATE_PATH}
+      SLACK_POST_METADATA_BUCKET_NAME: ${env:SLACK_POST_METADATA_BUCKET_NAME}
+      SLACK_POST_METADATA_FILE_NAME: ${env:SLACK_POST_METADATA_FILE_NAME}
+      SLACK_POST_CHANNEL: ${env:SLACK_POST_CHANNEL}
+      SLACK_BOT_OAUTH_TOKEN: ${env:SLACK_BOT_OAUTH_TOKEN} # ${ssm:/codepipeline-actions/slack_bot_oauth_token~true} # ~true for SecuredString

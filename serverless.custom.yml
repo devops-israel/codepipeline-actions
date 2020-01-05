@@ -11,6 +11,11 @@ customResources:
       Properties:
         TopicName: ${self:custom.appname}-cpa-AutoQaSNSTopic-${self:provider.stage}
 
+    FinalApprovalSNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.appname}-cpa-FinalApprovalSNSTopic-${self:provider.stage}
+
     # Roles
     sendSlackRole:
       Type: AWS::IAM::Role
@@ -170,6 +175,11 @@ slackPostReleaseEvent:
       arn: !Ref ReleaseSNSTopic
       topicName: ${self:custom.appname}-ReleaseSNSTopic-${self:provider.stage}
 
+slackPostFinalApprovalEvent:
+  - sns:
+      arn: !Ref FinalApprovalSNSTopic
+      topicName: ${self:custom.appname}-FinalApprovalSNSTopic-${self:provider.stage}
+
 processApprovalSlackReleaseEvents:
   - http:
       path: /codepipeline/release
@@ -203,3 +213,5 @@ customOutputs:
       Value: !Ref ReleaseSNSTopic
     AutoQaSNSTopicArn:
       Value: !Ref AutoQaSNSTopic
+    FinalApprovalSNSTopicArn:
+      Value: !Ref FinalApprovalSNSTopic
