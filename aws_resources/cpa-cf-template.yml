@@ -54,12 +54,12 @@ Parameters:
     MetadataFileName:
         Type: String
         Default: "metadata.nfo"
-    MetadataCreateBucket:
-        Type: String
-        Default: "No"
-        AllowedValues:
-            - "Yes"
-            - "No"
+    # MetadataCreateBucket:
+    #     Type: String
+    #     Default: "No"
+    #     AllowedValues:
+    #         - "Yes"
+    #         - "No"
     SlackPostBuildStatusCodeBuildProjectName:
         Type: String
         Default: "my-app-codebuild"
@@ -99,6 +99,7 @@ Parameters:
         Default: "qa-results.html"
     CodepipelineAutoConditionUploadMessage:
         Type: String
+        Description: "The message that will appear in Slack, the :x: is intentional"
         Default: ":x: AutoQa Results - Failed\nDownload the results and open in browser"
     CopyObjectOutputBucketName:
         Type: String
@@ -138,7 +139,7 @@ Metadata:
             - Label:
                   default: "Metadata File Details"
               Parameters:
-                  - MetadataCreateBucket
+                  #   - MetadataCreateBucket
                   - MetadataBucketName
                   - MetadataFileName
             - Label:
@@ -210,8 +211,8 @@ Metadata:
                 default: "Metadata Bucket Name"
             MetadataFileName:
                 default: "Metadata File Name"
-            MetadataCreateBucket:
-                default: "Create Metadata Bucket?"
+            # MetadataCreateBucket:
+            #     default: "Create Metadata Bucket?"
             SlackPostBuildStatusCodeBuildProjectName:
                 default: "CodeBuild Project Name"
             CodepipelineAutoConditionBucketName:
@@ -323,19 +324,21 @@ Resources:
 
     # Lambda Layers
     CpaDashaxiosLambdaLayer:
+        DependsOn: CopyZips
         Type: "AWS::Lambda::LayerVersion"
         Properties:
-        Content:
-            S3Bucket: !Ref LambdaZipsBucket
-            S3Key: axios.zip
-        LayerName: !Sub "${Stage}-cpa-axios"
+            Content:
+                S3Bucket: !Ref LambdaZipsBucket
+                S3Key: axios.zip
+            LayerName: !Sub "${Stage}-cpa-axios"
     CpaDashformdataLambdaLayer:
+        DependsOn: CopyZips
         Type: "AWS::Lambda::LayerVersion"
         Properties:
-        Content:
-            S3Bucket: !Ref LambdaZipsBucket
-            S3Key: formdata.zip
-        LayerName: !Sub "${Stage}-cpa-formdata"
+            Content:
+                S3Bucket: !Ref LambdaZipsBucket
+                S3Key: formdata.zip
+            LayerName: !Sub "${Stage}-cpa-formdata"
 
     # Lambda Functions
     SlackPostCodeBuildStatusLambdaFunction:
@@ -366,6 +369,7 @@ Resources:
         DependsOn:
             - SlackPostCodeBuildStatusLogGroup
             - sendSlackRole
+            - CpaDashaxiosLambdaLayer
 
     SlackPostReleaseLambdaFunction:
         Type: "AWS::Lambda::Function"
@@ -395,6 +399,7 @@ Resources:
         DependsOn:
             - SlackPostReleaseLogGroup
             - sendSlackRole
+            - CpaDashaxiosLambdaLayer
 
     CodepipelineSlackReleaseLambdaFunction:
         Type: "AWS::Lambda::Function"
@@ -421,6 +426,7 @@ Resources:
         DependsOn:
             - CodepipelineSlackReleaseLogGroup
             - processApprovalRole
+            - CopyZips
 
     SlackUpdateReleaseLambdaFunction:
         Type: "AWS::Lambda::Function"
@@ -446,6 +452,7 @@ Resources:
         DependsOn:
             - SlackUpdateReleaseLogGroup
             - sendSlackRole
+            - CpaDashaxiosLambdaLayer
 
     CopyCandidateLambdaFunction:
         Type: "AWS::Lambda::Function"
@@ -472,6 +479,7 @@ Resources:
         DependsOn:
             - CopyCandidateLogGroup
             - copyObjectRole
+            - CopyZips
 
     CodepipelineAutoQaLambdaFunction:
         Type: "AWS::Lambda::Function"
@@ -501,6 +509,7 @@ Resources:
         DependsOn:
             - CodepipelineAutoQaLogGroup
             - processApprovalRole
+            - CopyZips
 
     SlackUploadQaResultsLambdaFunction:
         Type: "AWS::Lambda::Function"
@@ -524,13 +533,15 @@ Resources:
                     SLACK_BOT_OAUTH_TOKEN: !Ref SlackAuthBotAccessToken
                     SLACK_UPLOAD_BUCKET_NAME: ""
                     SLACK_UPLOAD_FILE_NAME: ""
-                    SLACK_UPLOAD_MESSAGE: !Ref MMM#####
+                    SLACK_UPLOAD_MESSAGE: !Ref CodepipelineAutoConditionUploadMessage
             Layers:
                 - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:${Stage}-cpa-axios:1"
                 - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:${Stage}-cpa-formdata:1"
         DependsOn:
             - SlackUploadQaResultsLogGroup
             - slackUploadFileRole
+            - CpaDashaxiosLambdaLayer
+            - CpaDashformdataLambdaLayer
 
     # Api Gateway
     ApiGatewayRestApi:
@@ -552,7 +563,7 @@ Resources:
         Type: "AWS::ApiGateway::Resource"
         Properties:
             ParentId: !Ref ApiGatewayResourceCodepipeline
-            PathPart: release
+            PathPart: !Ref ApiGateWayPath
             RestApiId: !Ref ApiGatewayRestApi
     ApiGatewayMethodCodepipelineReleasePost:
         Type: "AWS::ApiGateway::Method"
@@ -846,6 +857,66 @@ Resources:
                                 - "s3:GetBucketVersioning"
                             Resource: "*"
 
+    # Copy Zips Function
+    CopyZipsFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            Description: Copies objects from a source S3 bucket to a destination
+            Handler: index.handler
+            Runtime: python2.7
+            Role: !GetAtt "CopyZipsRole.Arn"
+            Timeout: 240
+            Code:
+                ZipFile: |
+                    import json
+                    import logging
+                    import threading
+                    import boto3
+                    import cfnresponse
+                    def copy_objects(source_bucket, dest_bucket, prefix, objects):
+                        s3 = boto3.client('s3')
+                        for o in objects:
+                            key = prefix + o
+                            copy_source = {
+                                'Bucket': source_bucket,
+                                'Key': key
+                            }
+                            print('copy_source: %s' % copy_source)
+                            print('dest_bucket = %s'%dest_bucket)
+                            print('key = %s' %key)
+                            s3.copy_object(CopySource=copy_source, Bucket=dest_bucket,
+                                    Key=key)
+                    def delete_objects(bucket, prefix, objects):
+                        s3 = boto3.client('s3')
+                        objects = {'Objects': [{'Key': prefix + o} for o in objects]}
+                        s3.delete_objects(Bucket=bucket, Delete=objects)
+                    def timeout(event, context):
+                        logging.error('Execution is about to time out, sending failure response to CloudFormation')
+                        cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+                    def handler(event, context):
+                        # make sure we send a failure to CloudFormation if the function
+                        # is going to timeout
+                        timer = threading.Timer((context.get_remaining_time_in_millis()
+                                    / 1000.00) - 0.5, timeout, args=[event, context])
+                        timer.start()
+                        print('Received event: %s' % json.dumps(event))
+                        status = cfnresponse.SUCCESS
+                        try:
+                            source_bucket = event['ResourceProperties']['SourceBucket']
+                            dest_bucket = event['ResourceProperties']['DestBucket']
+                            prefix = event['ResourceProperties']['Prefix']
+                            objects = event['ResourceProperties']['Objects']
+                            if event['RequestType'] == 'Delete':
+                                delete_objects(dest_bucket, prefix, objects)
+                            else:
+                                copy_objects(source_bucket, dest_bucket, prefix, objects)
+                        except Exception as e:
+                            logging.error('Exception: %s' % e, exc_info=True)
+                            status = cfnresponse.FAILED
+                        finally:
+                            timer.cancel()
+                            cfnresponse.send(event, context, status, {}, None)
+
 Outputs:
     LambdaZipsBucket:
         Value: !Ref LambdaZipsBucket
@@ -859,7 +930,7 @@ Outputs:
               - !Ref "AWS::Region"
               - .
               - !Ref "AWS::URLSuffix"
-              - !Sub "/${Stage}/${ApiGateWayPath}"
+              - !Sub "/${Stage}/codepipeline/${ApiGateWayPath}"
     ReleaseSNSTopicArn:
         Value: !Ref ReleaseSNSTopic
     AutoQaSNSTopicArn:
