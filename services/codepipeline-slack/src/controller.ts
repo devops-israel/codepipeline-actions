@@ -93,7 +93,7 @@ export function getParams(event: any) {
 
 export async function processApproval(event: any) {
   // console.log(JSON.stringify(event));
-  if (event['path'].indexOf('/codepipeline/') === -1) {
+  if (event['path'].indexOf('/codepipeline-actions/') === -1) {
     return 'Not Slack SNS Payload';
   }
   if (!isVerified(event)) {

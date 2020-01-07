@@ -36,11 +36,9 @@ Parameters:
     SlackChannel:
         Type: String
         Default: "MyAppNotifications"
-        AllowedPattern: ^[a-zA-Z0-9]*$
     CodePipelineName:
         Type: String
         Default: "my-app-codepipeline"
-        AllowedPattern: (?=^.{3,63}$)(?!^(\d+\.)+\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$)
     # GitHubRepoName:
     #   Type: String
     # GitHubOwner:
@@ -63,7 +61,6 @@ Parameters:
     SlackPostBuildStatusCodeBuildProjectName:
         Type: String
         Default: "my-app-codebuild"
-        AllowedPattern: (?=^.{3,63}$)(?!^(\d+\.)+\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$)
     CodepipelineAutoConditionBucketName:
         Type: String
         Default: "my-app-qa-results-bucket"
@@ -75,11 +72,11 @@ Parameters:
         Description: "File name to check"
     CodepipelineAutoConditionMetadataProperty:
         Type: String
-        Default: "qa-results.html"
+        Default: "qa_status"
         Description: "Metadata property to check"
     CodepipelineAutoConditionMetadataSuccess:
         Type: String
-        Default: "qa_success"
+        Default: "success"
         Description: "Auto approve if metadata property value equals to this value, otherwise auto reject"
     SlackPostApprovalRequestReleaseSnsTopicName:
         Type: String
@@ -121,10 +118,6 @@ Parameters:
         Type: String
         Description: "Subscribe the function to this SNS topic"
         Default: "Final"
-    ApiGateWayPath:
-        Type: String
-        Description: "Path to trigger relevant functions"
-        Default: "codepipeline-actions"
 
 Metadata:
     AWS::CloudFormation::Interface:
@@ -135,7 +128,6 @@ Metadata:
                   - AppName
                   - Stage
                   - CodePipelineName
-                  - ApiGateWayPath
             - Label:
                   default: "Metadata File Details"
               Parameters:
@@ -197,8 +189,6 @@ Metadata:
                 default: "Stage / Environment"
             AppName:
                 default: "Application Name"
-            ApiGateWayPath:
-                default: "API Gateway Path"
             SlackAuthBotAccessToken:
                 default: "Slack App Bot Access Token (Hidden)"
             SlackAuthSigningSecret:
@@ -234,7 +224,7 @@ Metadata:
             CopyObjectOutputBucketName:
                 default: "Destination Bucket Name"
             CopyObjectOutputFileName:
-                default: "Destination Bucket Name"
+                default: "Destination File Name"
             CopyObjectSourceBucketName:
                 default: "Source Bucket Name"
             CopyObjectSourceSourceFileName:
@@ -301,6 +291,10 @@ Resources:
         Type: "AWS::Logs::LogGroup"
         Properties:
             LogGroupName: !Sub "/aws/lambda/${AppName}-cpa-${Stage}-slackPostRelease"
+    SlackPostFinalLogGroup:
+        Type: "AWS::Logs::LogGroup"
+        Properties:
+            LogGroupName: !Sub "/aws/lambda/${AppName}-cpa-${Stage}-slackPostFinal"
     CodepipelineSlackReleaseLogGroup:
         Type: "AWS::Logs::LogGroup"
         Properties:
@@ -371,6 +365,7 @@ Resources:
             - sendSlackRole
             - CpaDashaxiosLambdaLayer
 
+    # Release
     SlackPostReleaseLambdaFunction:
         Type: "AWS::Lambda::Function"
         Properties:
@@ -407,7 +402,7 @@ Resources:
             Code:
                 S3Bucket: !Ref LambdaZipsBucket
                 S3Key: dist_codepipeline_slack.zip
-            FunctionName: !Sub "${AppName}-cpa-${Stage}codepipelineSlackRelease"
+            FunctionName: !Sub "${AppName}-cpa-${Stage}-codepipelineSlackRelease"
             Handler: index.handler
             MemorySize: 192
             Role: !GetAtt
@@ -454,6 +449,38 @@ Resources:
             - sendSlackRole
             - CpaDashaxiosLambdaLayer
 
+    # # Final
+    SlackPostFinalLambdaFunction:
+        Type: "AWS::Lambda::Function"
+        Properties:
+            Code:
+                S3Bucket: !Ref LambdaZipsBucket
+                S3Key: dist_slack_post.zip
+            FunctionName: !Sub "${AppName}-cpa-${Stage}-slackPostFinal"
+            Handler: index.handler
+            MemorySize: 192
+            Role: !GetAtt
+                - sendSlackRole
+                - Arn
+            Runtime: nodejs12.x
+            Timeout: 6
+            Environment:
+                Variables:
+                    REGION: !Sub "${AWS::Region}"
+                    STAGE: !Ref Stage
+                    SLACK_POST_TEMPLATE_PATH: ./Template.json
+                    SLACK_POST_METADATA_BUCKET_NAME: !Ref MetadataBucketName
+                    SLACK_POST_METADATA_FILE_NAME: !Ref MetadataFileName
+                    SLACK_POST_CHANNEL: !Ref SlackChannel
+                    SLACK_BOT_OAUTH_TOKEN: !Ref SlackAuthBotAccessToken
+            Layers:
+                - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:${Stage}-cpa-axios:1"
+        DependsOn:
+            - SlackPostFinalLogGroup
+            - sendSlackRole
+            - CpaDashaxiosLambdaLayer
+
+    # Copy
     CopyCandidateLambdaFunction:
         Type: "AWS::Lambda::Function"
         Properties:
@@ -531,8 +558,8 @@ Resources:
                     STAGE: !Ref Stage
                     SLACK_UPLOAD_CHANNEL: !Ref SlackChannel
                     SLACK_BOT_OAUTH_TOKEN: !Ref SlackAuthBotAccessToken
-                    SLACK_UPLOAD_BUCKET_NAME: ""
-                    SLACK_UPLOAD_FILE_NAME: ""
+                    SLACK_UPLOAD_BUCKET_NAME: !Ref CodepipelineAutoConditionUploadBucketName
+                    SLACK_UPLOAD_FILE_NAME: !Ref CodepipelineAutoConditionUploadFileName
                     SLACK_UPLOAD_MESSAGE: !Ref CodepipelineAutoConditionUploadMessage
             Layers:
                 - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:${Stage}-cpa-axios:1"
@@ -557,14 +584,16 @@ Resources:
             ParentId: !GetAtt
                 - ApiGatewayRestApi
                 - RootResourceId
-            PathPart: codepipeline
+            PathPart: "codepipeline-actions"
             RestApiId: !Ref ApiGatewayRestApi
     ApiGatewayResourceCodepipelineRelease:
         Type: "AWS::ApiGateway::Resource"
         Properties:
             ParentId: !Ref ApiGatewayResourceCodepipeline
-            PathPart: !Ref ApiGateWayPath
+            PathPart: "action"
             RestApiId: !Ref ApiGatewayRestApi
+
+    # Release
     ApiGatewayMethodCodepipelineReleasePost:
         Type: "AWS::ApiGateway::Method"
         Properties:
@@ -589,7 +618,7 @@ Resources:
                         - Arn
                       - /invocations
             MethodResponses: []
-    ApiGatewayDeployment1578237934902:
+    ApiGatewayDeploymentRelease:
         Type: "AWS::ApiGateway::Deployment"
         Properties:
             RestApiId: !Ref ApiGatewayRestApi
@@ -619,6 +648,7 @@ Resources:
                   - /*/*
 
     # SNS Subscriptions
+    ## Release
     SlackPostReleaseSnsSubscriptionReleaseSNSTopic:
         Type: "AWS::SNS::Subscription"
         Properties:
@@ -636,6 +666,25 @@ Resources:
             Action: "lambda:InvokeFunction"
             Principal: sns.amazonaws.com
             SourceArn: !Ref ReleaseSNSTopic
+    ## Final
+    SlackPostFinalSnsSubscriptionFinalSNSTopic:
+        Type: "AWS::SNS::Subscription"
+        Properties:
+            TopicArn: !Ref FinalSNSTopic
+            Protocol: lambda
+            Endpoint: !GetAtt
+                - SlackPostFinalLambdaFunction
+                - Arn
+    SlackPostFinalLambdaPermissionFinalSNSTopicSNS:
+        Type: "AWS::Lambda::Permission"
+        Properties:
+            FunctionName: !GetAtt
+                - SlackPostFinalLambdaFunction
+                - Arn
+            Action: "lambda:InvokeFunction"
+            Principal: sns.amazonaws.com
+            SourceArn: !Ref FinalSNSTopic
+    ## AutoQa
     CodepipelineAutoQaSnsSubscriptionAutoQaSNSTopic:
         Type: "AWS::SNS::Subscription"
         Properties:
@@ -693,11 +742,17 @@ Resources:
     ReleaseSNSTopic:
         Type: "AWS::SNS::Topic"
         Properties:
-            TopicName: !Sub "${AppName}-cpa-ReleaseSNSTopic-${Stage}"
+            TopicName: !Sub "${AppName}-cpa-${SlackPostApprovalRequestReleaseSnsTopicName}-${Stage}"
     AutoQaSNSTopic:
         Type: "AWS::SNS::Topic"
         Properties:
-            TopicName: !Sub "${AppName}-cpa-AutoQaSNSTopic-${Stage}"
+            TopicName: !Sub "${AppName}-cpa-AutoQa-${Stage}"
+    FinalSNSTopic:
+        Type: "AWS::SNS::Topic"
+        Properties:
+            TopicName: !Sub "${AppName}-cpa-${SlackPostApprovalRequestFinalSnsTopicName}-${Stage}"
+
+    # Functions Roles
     sendSlackRole:
         Type: "AWS::IAM::Role"
         Properties:
@@ -735,7 +790,6 @@ Resources:
                                 - !Sub "arn:aws:s3:::${MetadataBucketName}"
                                 - !Sub "arn:aws:s3:::${MetadataBucketName}/*"
 
-    # Functions Roles
     processApprovalRole:
         Type: "AWS::IAM::Role"
         Properties:
@@ -814,13 +868,25 @@ Resources:
                           - Effect: Allow
                             Action:
                                 - "s3:*"
+                            Resource:
+                                "*"
+                                # - !Sub "arn:aws:s3:::${CopyObjectOutputBucketName}"
+                                # - !Sub "arn:aws:s3:::${CopyObjectOutputBucketName}/*"
+                                # - !Sub "arn:aws:s3:::${CopyObjectSourceBucketName}"
+                                # - !Sub "arn:aws:s3:::${CopyObjectSourceBucketName}/*"
+                                # - !Sub "arn:aws:s3:::${MetadataBucketName}/*"
+                                # - !Sub "arn:aws:s3:::${MetadataBucketName}/*"
+                                # - !Sub "arn:aws:s3:::${CodepipelineAutoConditionBucketName}"
+                                # - !Sub "arn:aws:s3:::${CodepipelineAutoConditionBucketName}/*"
+                          - Effect: Allow
+                            Action:
                                 - "codepipeline:PutJobFailureResult"
                                 - "codepipeline:PutJobSuccessResult"
                             Resource:
-                                - !Sub "arn:aws:s3:::${CopyObjectOutputBucketName}"
-                                - !Sub "arn:aws:s3:::${CopyObjectOutputBucketName}/*"
-                                - !Sub "arn:aws:s3:::${CopyObjectSourceBucketName}"
-                                - !Sub "arn:aws:s3:::${CopyObjectSourceBucketName}/*"
+                                "*"
+                                # - !Sub "arn:*:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipelineName}*"
+                                # - !Sub "arn:*:codepipeline:${AWS::Region}:${AWS::AccountId}:webhook:*"
+                                # - !Sub "arn:*:codepipeline:${AWS::Region}:${AWS::AccountId}:actiontype:*"
 
     slackUploadFileRole:
         Type: "AWS::IAM::Role"
@@ -919,9 +985,10 @@ Resources:
 
 Outputs:
     LambdaZipsBucket:
+        Description: This bucket contains the Lambda functions zip files
         Value: !Ref LambdaZipsBucket
     ServiceEndpoint:
-        Description: URL of the service endpoint
+        Description: Use in Slack Interactive Components > Request URL
         Value: !Join
             - ""
             - - "https://"
@@ -930,8 +997,13 @@ Outputs:
               - !Ref "AWS::Region"
               - .
               - !Ref "AWS::URLSuffix"
-              - !Sub "/${Stage}/codepipeline/${ApiGateWayPath}"
+              - !Sub "/${Stage}/codepipeline-actions/action"
     ReleaseSNSTopicArn:
         Value: !Ref ReleaseSNSTopic
+        Description: Use in your CodePipeline
     AutoQaSNSTopicArn:
         Value: !Ref AutoQaSNSTopic
+        Description: Use in your CodePipeline
+    FinalSNSTopicArn:
+        Value: !Ref FinalSNSTopic
+        Description: Use in your CodePipeline

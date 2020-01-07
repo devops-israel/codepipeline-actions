@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   CodeBuild Template for aws-codepipeline-actions
 
@@ -15,12 +15,12 @@ Parameters:
     ConstraintDescription: Must be any of the available options
   GithubOwner:
     Type: String
-    Description: 'Github repo owner'
+    Description: "Github repo owner"
   GithubRepo:
     Type: String
-    Description: 'Github repo name'
+    Description: "Github repo name"
   GithubBranchName:
-    Description: 'GitHub branch name'
+    Description: "GitHub branch name"
     Type: String
   MetadataBucketName:
     Type: String
@@ -32,36 +32,36 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
               Service:
-                - 'codebuild.amazonaws.com'
+                - "codebuild.amazonaws.com"
             Action:
-              - 'sts:AssumeRole'
+              - "sts:AssumeRole"
       Path: /service-role/
       Policies:
         - PolicyName: root
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - 's3:PutObject'
+                  - "s3:PutObject"
                 Resource:
-                  - !Sub 'arn:aws:s3:::${MetadataBucketName}/*'
+                  - !Sub "arn:aws:s3:::${MetadataBucketName}/*"
               - Effect: Allow
                 Action:
-                  - 'logs:CreateLogGroup'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
                 Resource:
-                  - '*'
+                  - "*"
 
   # Creates candidate_metadata.nfo
   CodeBuildMetadata:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${AppName}-cpa-CodeBuildMetadata-${Stage}
       ServiceRole: !GetAtt CodeBuildMetadataRole.Arn
@@ -71,7 +71,7 @@ Resources:
         # Linux container with node installed
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
-        Image: 'aws/codebuild/standard:3.0'
+        Image: "aws/codebuild/standard:3.0"
         EnvironmentVariables:
           - Name: STAGE
             Value: !Ref Stage
@@ -103,7 +103,7 @@ Resources:
                 - echo ">> Copying ${METADATA_FILE_NAME} to the bucket ${METADATA_BUCKET_NAME}"
                 - aws s3 cp ${METADATA_FILE_NAME} s3://${METADATA_BUCKET_NAME}/${METADATA_FILE_NAME} --metadata qa_status=success,source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}
         GitCloneDepth: 1
-        Location: !Sub 'https://github.com/${GithubOwner}/${GithubRepo}'
+        Location: !Sub "https://github.com/${GithubOwner}/${GithubRepo}"
         ReportBuildStatus: true
         Type: GITHUB
       Triggers:
@@ -112,12 +112,16 @@ Resources:
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED, PULL_REQUEST_MERGED
             - Type: BASE_REF
-              Pattern: !Sub 'refs/heads/${GithubBranchName}$'
+              Pattern: !Sub "refs/heads/${GithubBranchName}$"
               ExcludeMatchedPattern: false
           - - Type: EVENT
               Pattern: PUSH
             - Type: HEAD_REF
-              Pattern: !Sub '^refs/heads/${GithubBranchName}$'
+              Pattern: !Sub "^refs/heads/${GithubBranchName}$"
             - Type: FILE_PATH
               Pattern: README.md
               ExcludeMatchedPattern: true
+
+Outputs:
+  CodeBuildProjectName:
+    Value: !Ref CodeBuildMetadata
