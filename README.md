@@ -3,8 +3,8 @@
 Improve the use of CodePipeline by adding the following features:
 
 1. Approve Manual Approval step via Slack
-1. (Under development) Copy files according to condition
-1. (Under development) Automatically approve/reject Manual Approval step according to QA results
+1. Copy files according to condition
+1. Automatically approve/reject Manual Approval step according to QA results
 
 **Note**: to shorten the resources' names, you'll sometimes see `cpa` instead of `codepipeline-actions`
 
