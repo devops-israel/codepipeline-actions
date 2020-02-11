@@ -1,8 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >
     1. https://api.slack.com/apps > Create a Slack application >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    2. Slack App > Bot Users > Create Bot User >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    3. Slack App > OAuth & Permissions > Scopes > bot, chat:write:bot, chat:write:user, files:write:user >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    2. Slack App > OAuth & Permissions > Scopes > chat:write, files:write >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     4. Slack > Add the Bot User to your channel >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     5. This Stack > Leave empty values if you don't intend to use a function > Create Stack >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     6. After creating this Stack > Slack App > Interactive Components > On > Set Request URL to this template's API Gateway Endpoint URL >>>>>>>>>>>
@@ -65,7 +64,7 @@ Parameters:
         Type: String
         Default: "my-app-qa-results-bucket"
         Description: "Bucket name of the file to check"
-        AllowedPattern: (?=^.{3,63}$)(?!^(\d+\.)+\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$)
+        # AllowedPattern: (?=^.{3,63}$)(?!^(\d+\.)+\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$)
     CodepipelineAutoConditionFileName:
         Type: String
         Default: "qa-results.html"
@@ -101,7 +100,7 @@ Parameters:
     CopyObjectOutputBucketName:
         Type: String
         Default: "my-app-testedcandidates-bucket"
-        AllowedPattern: (?=^.{3,63}$)(?!^(\d+\.)+\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$)
+        # AllowedPattern: (?=^.{3,63}$)(?!^(\d+\.)+\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$)
     CopyObjectOutputFileName:
         Type: String
         Default: "testedcandidate.zip"
@@ -109,7 +108,7 @@ Parameters:
         Type: String
         Description: "If empty, will attempt to copy CodePipeline artifact"
         Default: "my-app-candidates-bucket"
-        AllowedPattern: (?=^.{3,63}$)(?!^(\d+\.)+\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$)
+        # AllowedPattern: (?=^.{3,63}$)(?!^(\d+\.)+\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$)
     CopyObjectSourceSourceFileName:
         Description: "If empty, will attempt to copy CodePipeline artifact"
         Type: String
@@ -231,6 +230,17 @@ Metadata:
                 default: "Source File Name"
             SlackPostApprovalRequestFinalSnsTopicName:
                 default: "SNS Topic Name"
+
+Conditions:
+    EmptyAutoCondition: !Or
+        - !Equals [CodepipelineAutoConditionBucketName, ""]
+        - !Equals [CodepipelineAutoConditionFileName, ""]
+        - !Equals [CodepipelineAutoConditionMetadataProperty, ""]
+        - !Equals [CodepipelineAutoConditionMetadataSuccess, ""]
+        - !Equals [CodepipelineAutoConditionUploadBucketName, ""]
+        - !Equals [CodepipelineAutoConditionUploadFileName, ""]
+        - !Equals [CodepipelineAutoConditionUploadMessage, ""]
+    CreateAutoCondition: !Not [Condition: EmptyAutoCondition]
 
 Resources:
     LambdaZipsBucket:
@@ -510,6 +520,7 @@ Resources:
 
     CodepipelineAutoQaLambdaFunction:
         Type: "AWS::Lambda::Function"
+        Condition: CreateAutoCondition
         Properties:
             Code:
                 S3Bucket: !Ref LambdaZipsBucket
@@ -540,6 +551,7 @@ Resources:
 
     SlackUploadQaResultsLambdaFunction:
         Type: "AWS::Lambda::Function"
+        Condition: CreateAutoCondition
         Properties:
             Code:
                 S3Bucket: !Ref LambdaZipsBucket
@@ -687,6 +699,7 @@ Resources:
     ## AutoQa
     CodepipelineAutoQaSnsSubscriptionAutoQaSNSTopic:
         Type: "AWS::SNS::Subscription"
+        Condition: CreateAutoCondition
         Properties:
             TopicArn: !Ref AutoQaSNSTopic
             Protocol: lambda
@@ -695,6 +708,7 @@ Resources:
                 - Arn
     CodepipelineAutoQaLambdaPermissionAutoQaSNSTopicSNS:
         Type: "AWS::Lambda::Permission"
+        Condition: CreateAutoCondition
         Properties:
             FunctionName: !GetAtt
                 - CodepipelineAutoQaLambdaFunction
@@ -745,6 +759,7 @@ Resources:
             TopicName: !Sub "${AppName}-cpa-${SlackPostApprovalRequestReleaseSnsTopicName}-${Stage}"
     AutoQaSNSTopic:
         Type: "AWS::SNS::Topic"
+        Condition: CreateAutoCondition
         Properties:
             TopicName: !Sub "${AppName}-cpa-AutoQa-${Stage}"
     FinalSNSTopic:
@@ -828,14 +843,15 @@ Resources:
                           - Effect: Allow
                             Action: "s3:*"
                             Resource:
-                                - !Sub "arn:aws:s3:::${MetadataBucketName}/*"
-                                - !Sub "arn:aws:s3:::${MetadataBucketName}/*"
-                                - !Sub "arn:aws:s3:::${CodepipelineAutoConditionBucketName}"
-                                - !Sub "arn:aws:s3:::${CodepipelineAutoConditionBucketName}/*"
-                                - !Sub "arn:aws:s3:::${CopyObjectOutputBucketName}"
-                                - !Sub "arn:aws:s3:::${CopyObjectOutputBucketName}/*"
-                                - !Sub "arn:aws:s3:::${CopyObjectSourceBucketName}"
-                                - !Sub "arn:aws:s3:::${CopyObjectSourceBucketName}/*"
+                                "*"
+                                # - !Sub "arn:aws:s3:::${MetadataBucketName}/*"
+                                # - !Sub "arn:aws:s3:::${MetadataBucketName}/*"
+                                # - !Sub "arn:aws:s3:::${CodepipelineAutoConditionBucketName}"
+                                # - !Sub "arn:aws:s3:::${CodepipelineAutoConditionBucketName}/*"
+                                # - !Sub "arn:aws:s3:::${CopyObjectOutputBucketName}"
+                                # - !Sub "arn:aws:s3:::${CopyObjectOutputBucketName}/*"
+                                # - !Sub "arn:aws:s3:::${CopyObjectSourceBucketName}"
+                                # - !Sub "arn:aws:s3:::${CopyObjectSourceBucketName}/*"
 
     copyObjectRole:
         Type: "AWS::IAM::Role"
@@ -1002,6 +1018,7 @@ Outputs:
         Value: !Ref ReleaseSNSTopic
         Description: Use in your CodePipeline
     AutoQaSNSTopicArn:
+        Condition: CreateAutoCondition
         Value: !Ref AutoQaSNSTopic
         Description: Use in your CodePipeline
     FinalSNSTopicArn:
