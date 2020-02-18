@@ -10,7 +10,8 @@ Improve the use of CodePipeline by adding the following features:
 
 ![Approve-Example](./assets/cpa-approve-example.png 'Approve Example')
 
-<details><summary><h4 style="display:inline-block">More Examples</h2>
+<details><summary>
+More Examples
 </summary>
 
 ![Build-Succeeded-Example](./assets/cpa-approve-example.png 'Build Succeeded Example')
@@ -31,7 +32,8 @@ Improve the use of CodePipeline by adding the following features:
 
 [![Launch in Canada](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png) Canada ca-central-1](https://eu-west-1.console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/quickcreate?templateURL=https://codepipeline-actions.s3-eu-west-1.amazonaws.com/cpa-cf-template.yml)
 
-<details><summary><h4 style="display:inline-block">More regions</h4>
+<details><summary>
+More regions
 </summary>
 
 To deploy in other regions, replace AWS_REGION with the region's code
@@ -99,7 +101,8 @@ Add relevant topics in your CodePipeline, full example - [cpa-cf-codepipeline.ym
 
 _TODO_: Add instructions on how to do it via AWS Console
 
-<details><summary><h2 style="display:inline-block">Contributing</h2>
+<details><summary>
+<b>Contributing</b>
 </summary>
 
 ### Prerequisites
@@ -183,7 +186,8 @@ Create a pull-request, from any branch to `develop` branch, now look at `codepip
 
 </details>
 
-<details><summary><h2 style="display:inline-block">Troubleshooting</h2>
+<details><summary>
+<b>Troubleshooting</b>
 </summary>
 
 ### Not getting Approval messages in Slack
