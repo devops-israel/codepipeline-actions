@@ -6,12 +6,22 @@ customResources:
       Properties:
         TopicName: ${self:custom.appname}-ReleaseSNSTopic-${self:provider.stage}
 
+    AutoQaSNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.appname}-cpa-AutoQaSNSTopic-${self:provider.stage}
+
+    FinalApprovalSNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.appname}-cpa-FinalApprovalSNSTopic-${self:provider.stage}
+
     # Roles
     sendSlackRole:
       Type: AWS::IAM::Role
       Properties:
         AssumeRolePolicyDocument:
-          Version: "2012-10-17"
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
@@ -21,7 +31,7 @@ customResources:
         Policies:
           - PolicyName: root
             PolicyDocument:
-              Version: "2012-10-17"
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -29,26 +39,26 @@ customResources:
                     - logs:CreateLogStream
                     - logs:PutLogEvents
                   Resource:
-                    - "Fn::Join":
-                        - ":"
-                        - - "arn:aws:logs"
-                          - Ref: "AWS::Region"
-                          - Ref: "AWS::AccountId"
-                          - "log-group:/aws/lambda/*:*:*"
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:logs'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'log-group:/aws/lambda/*:*:*'
                 - Effect: Allow
                   Action:
                     - s3:GetObject
                     - s3:GetObjectVersion
                     - s3:GetBucketVersioning
                   Resource:
-                    - "arn:aws:s3:::${env:SLACK_POST_METADATA_BUCKET_NAME}"
-                    - "arn:aws:s3:::${env:SLACK_POST_METADATA_BUCKET_NAME}/*"
+                    - 'arn:aws:s3:::${env:SLACK_POST_METADATA_BUCKET_NAME}'
+                    - 'arn:aws:s3:::${env:SLACK_POST_METADATA_BUCKET_NAME}/*'
 
     processApprovalRole:
       Type: AWS::IAM::Role
       Properties:
         AssumeRolePolicyDocument:
-          Version: "2012-10-17"
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
@@ -58,7 +68,7 @@ customResources:
         Policies:
           - PolicyName: root
             PolicyDocument:
-              Version: "2012-10-17"
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -66,19 +76,98 @@ customResources:
                     - logs:CreateLogStream
                     - logs:PutLogEvents
                   Resource:
-                    - "Fn::Join":
-                        - ":"
-                        - - "arn:aws:logs"
-                          - Ref: "AWS::Region"
-                          - Ref: "AWS::AccountId"
-                          - "log-group:/aws/lambda/*:*:*"
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:logs'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'log-group:/aws/lambda/*:*:*'
                 - Effect: Allow
                   Action:
-                    - "codepipeline:PutApprovalResult"
-                  Resource: "*"
+                    - 'codepipeline:PutApprovalResult'
+                  Resource: '*'
                 - Effect: Allow
-                  Action: "lambda:InvokeFunction"
-                  Resource: "*"
+                  Action: 'lambda:InvokeFunction'
+                  Resource: '*'
+                - Effect: Allow
+                  Action: 's3:*'
+                  Resource:
+                    - 'arn:aws:s3:::${env:REJECTED_BUCKET_NAME}'
+                    - 'arn:aws:s3:::${env:REJECTED_BUCKET_NAME}/*'
+                    - 'arn:aws:s3:::${env:CONDITION_BUCKET_NAME}'
+                    - 'arn:aws:s3:::${env:CONDITION_BUCKET_NAME}/*'
+                    - 'arn:aws:s3:::${env:SLACK_POST_METADATA_BUCKET_NAME}'
+                    - 'arn:aws:s3:::${env:SLACK_POST_METADATA_BUCKET_NAME}/*'
+
+    copyObjectRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: root
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:logs'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - 's3:*'
+                    - 'codepipeline:PutJobFailureResult'
+                    - 'codepipeline:PutJobSuccessResult'
+                  Resource: '*'
+
+    slackUploadFileRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: root
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:logs'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - s3:GetObject
+                    - s3:GetObjectVersion
+                    - s3:GetBucketVersioning
+                  Resource: '*'
 
 # Events
 slackPostReleaseEvent:
@@ -86,13 +175,43 @@ slackPostReleaseEvent:
       arn: !Ref ReleaseSNSTopic
       topicName: ${self:custom.appname}-ReleaseSNSTopic-${self:provider.stage}
 
+slackPostFinalApprovalEvent:
+  - sns:
+      arn: !Ref FinalApprovalSNSTopic
+      topicName: ${self:custom.appname}-FinalApprovalSNSTopic-${self:provider.stage}
+
 processApprovalSlackReleaseEvents:
   - http:
-      path: /codepipeline/release
+      path: ${env:API_GATEWAY_PATH}
       method: post
+
+codeBuildStatusEvent:
+  - cloudwatchEvent:
+      name: '${self:custom.appname}-cpa-build-status-${opt:stage}'
+      description: 'Triggered upon status change of CodeBuildCandidate project'
+      event:
+        source:
+          - 'aws.codebuild'
+        detail-type:
+          - 'CodeBuild Build State Change'
+        detail:
+          project-name:
+            - ${env:CODEBUILD_PROJECT_NAME}
+          build-status:
+            - SUCCEEDED
+            - FAILED
+
+autoQaApprovalEvent:
+  - sns:
+      arn: !Ref AutoQaSNSTopic
+      topicName: ${self:custom.appname}-cpa-AutoQaSNSTopic-${self:provider.stage}
 
 # Outputs
 customOutputs:
   Outputs:
     ReleaseSNSTopicArn:
       Value: !Ref ReleaseSNSTopic
+    AutoQaSNSTopicArn:
+      Value: !Ref AutoQaSNSTopic
+    FinalApprovalSNSTopicArn:
+      Value: !Ref FinalApprovalSNSTopic

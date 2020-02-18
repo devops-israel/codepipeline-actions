@@ -1,0 +1,28 @@
+{
+  "channel": "{Channel}",
+  "text": "CodeBuild {Stage}",
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": ">*CodeBuild*: {CodeBuildProjectName}\n>*Build Status*: {BuildStatus}"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*<{LinkGitHub}|{WebhookTrigger} - {WebhookEvent}>*\n*Source ID*\n{SourceId}\n*Head Ref*\n{WebhookHeadRef}\n"
+      },
+      "accessory": {
+        "type": "image",
+        "image_url": "{GitHubAvatar}",
+        "alt_text": "GitHubAvatar"
+      }
+    },
+    {
+      "type": "divider"
+    }
+  ]
+}

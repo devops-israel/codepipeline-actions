@@ -1,0 +1,7 @@
+#!/bin/bash
+ROOTDIR="${PWD}"
+cd layers
+yarn deploy
+cd "${ROOTDIR}"
+
+source ./scripts/set_layer_version

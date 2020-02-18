@@ -1,0 +1,46 @@
+#!/bin/bash
+ROOTDIR="{$PWD}"
+echo ">> Removing dist folder and dist.zip"
+rm -r "./dist"
+echo ">> Identifying files & folders to zip"
+servicesFolders=$(find ./services -maxdepth 1 -type d -exec bash -c '[ -f "$0"/package.json ] && [ -f "$0"/yarn.lock ]' '{}' \; -print | sort)
+servicesFolders=$(echo $servicesFolders | tr ' ' '\n' | grep -v "shared")
+echo ">> The following services will be copied to the ./dist folder:"
+echo "${servicesFolders}"
+servicesFolders=$(echo $servicesFolders | sed 's/[^ ]*/&\/dist/g')
+echo ">> Copying ZIP files to ./dist"
+mkdir "./dist"
+for serviceFolder in $servicesFolders; do
+    distZipFilePath=$(find ${serviceFolder}/ -maxdepth 1 -name "dist_*.zip" -type f)
+    distZipFileName=$(basename "${distZipFilePath}")
+    cp "${distZipFilePath}" "./dist/${distZipFileName}"
+done
+
+layerFolders=$(find ./layers -maxdepth 1 -type d -exec bash -c '[ -f "$0"/*.zip ]' '{}' \; -print | sort)
+echo ">> The following layers will be copied to the ./dist folder:"
+echo "${layerFolders}"
+echo ">> Copying ZIP files to ./dist"
+for layerFolder in $layerFolders; do
+    distZipFilePath=$(find ${layerFolder}/ -maxdepth 1 -name "*.zip" -type f)
+    distZipFileName=$(basename "${distZipFilePath}")
+    cp "${distZipFilePath}" "./dist/${distZipFileName}"
+done
+
+echo ">> Successfully copied ZIP files to ./dist"
+# serverlessFiles=$(find -maxdepth 1 -name "serverless.*yml" -type f | sort)
+# dockerFiles=$(find -maxdepth 1 -name "docker*.yml" -type f | sort)
+# packageFiles="babel.config.js env eslintrc.js  jest.config.js LICENSE package.json"
+# echo ">> Files that will be zipped:"
+# echo ">> Serverless files:"
+# echo "${serverlessFiles}"
+# echo ">> Docker files:"
+# echo "${dockerFiles}"
+# echo ">> Package files:"
+# echo "${packageFiles}"
+# cp "${serverlessFiles}" "${dockerFiles}" "${packageFiles}" "./dist"
+# echo ">> Zipping dist to dist.zip ..."
+# cd ./dist
+# zip -rq ../dist.zip .
+# cd $ROOTDIR
+# zip_result=$(find . -name "dist.zip" -type f)
+# echo ">> Completed zipping dist to dist.zip ..."

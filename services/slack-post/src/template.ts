@@ -17,7 +17,7 @@ async function getGithubDetails(actor_id: string) {
       return details.data;
     })
     .catch(function(error) {
-      return error;
+      return { name: 'Manual-Invocation', avatar_url: 'https://picsum.photos/536/354', error: error };
     });
 }
 
@@ -31,33 +31,68 @@ function setGithubLink(s3object: any) {
   }
 }
 
+function isCodeBuildEvent(event: any): boolean {
+  if (event['source'] && event['source'] === 'aws.codebuild') {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function isSnsEvent(event: any): boolean {
+  if (event['Records'] && event['Records'][0] && event['Records'][0]['Sns']) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 async function getTemplateParameters(event: any) {
-  const msg = JSON.parse(event['Records'][0]['Sns']['Message']);
+  let parameters_array: any[] = [];
   const s3object = await getS3Object(slack_post_metadata_file_name, slack_post_metadata_bucket_name);
   let link_github = setGithubLink(s3object);
   const github_details = await getGithubDetails(s3object.Metadata['webhook_actor']);
-  return [
+  const s3_metadata = [
     { key: 'GitHubName', value: github_details.name },
     { key: 'GitHubAvatar', value: github_details.avatar_url },
-    { key: 'PipelineName', value: msg.approval.pipelineName },
-    { key: 'ActionName', value: msg.approval.actionName },
-    { key: 'StageName', value: msg.approval.stageName },
-    { key: 'Token', value: msg.approval.token },
-    { key: 'Channel', value: slack_post_channel },
     { key: 'QaStatus', value: s3object.Metadata['qa_status'] },
     { key: 'ETag', value: s3object.Metadata['etag'] },
     { key: 'LinkGitHub', value: link_github },
     { key: 'SourceId', value: s3object.Metadata['source_id'] },
-    { key: 'VersionId', value: s3object.Metadata['versionid'] },
+    { key: 'VersionId', value: s3object.VersionId },
     { key: 'WebhookActorId', value: s3object.Metadata['webhook_actor'] },
     { key: 'WebhookBaseRef', value: s3object.Metadata['webhook_base_ref'] },
     { key: 'WebhookEvent', value: s3object.Metadata['webhook_event'] },
     { key: 'WebhookHeadRef', value: s3object.Metadata['webhook_head_ref'] },
     { key: 'WebhookTrigger', value: s3object.Metadata['webhook_trigger'] },
-    { key: 'Stage', value: stage },
-    { key: 'ApprovalReviewLink', value: msg.approval.approvalReviewLink },
-    { key: 'ApprovalExpirationDate', value: msg.approval.expires },
   ];
+  parameters_array = parameters_array.concat(s3_metadata);
+  if (isSnsEvent(event)) {
+    const msg = JSON.parse(event['Records'][0]['Sns']['Message']);
+    parameters_array = parameters_array.concat([
+      { key: 'PipelineName', value: msg.approval.pipelineName },
+      { key: 'ActionName', value: msg.approval.actionName },
+      { key: 'StageName', value: msg.approval.stageName },
+      { key: 'Token', value: msg.approval.token },
+      { key: 'ApprovalReviewLink', value: msg.approval.approvalReviewLink },
+      { key: 'ApprovalExpirationDate', value: msg.approval.expires },
+    ]);
+  }
+
+  if (isCodeBuildEvent(event)) {
+    const build_status =
+      event['detail']['build-status'] === 'SUCCEEDED' ? ':heavy_check_mark: Succeeded' : ':x: Failed';
+    parameters_array = parameters_array.concat([
+      { key: 'BuildStatus', value: build_status },
+      { key: 'CodeBuildProjectName', value: event['detail']['project-name'] },
+    ]);
+  }
+
+  parameters_array = parameters_array.concat([
+    { key: 'Stage', value: stage },
+    { key: 'Channel', value: slack_post_channel },
+  ]);
+  return parameters_array;
 }
 
 export async function getTemplate(event: any) {

@@ -1,0 +1,5 @@
+#!/bin/bash
+ROOTDIR="${PWD}"
+cd layers
+yarn destroy
+cd "${ROOTDIR}"

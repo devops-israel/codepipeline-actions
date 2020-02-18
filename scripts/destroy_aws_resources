@@ -1,0 +1,15 @@
+#!/bin/bash
+codebuild_stack_name="${APP_NAME}-codebuild-${STAGE}"
+echo ">> Destroying CodeBuild stack: $codebuild_stack_name"
+destroy_codebuild=$(aws cloudformation delete-stack --region "${AWS_REGION}" --stack-name $codebuild_stack_name)
+
+codepipeline_stack_name="${APP_NAME}-codepipeline-${STAGE}"
+echo ">> Destroying CodePipeline stack: $codepipeline_stack_name"
+destroy_codepipeline=$(aws cloudformation delete-stack --region "${AWS_REGION}" --stack-name $codepipeline_stack_name)
+
+codebuild_metadata_stack_name="${APP_NAME}-codebuild-metadata-${STAGE}"
+echo ">> Destroying CodePipeline stack: $codepipeline_stack_name"
+destroy_codepipeline=$(aws cloudformation delete-stack --region "${AWS_REGION}" --stack-name $codebuild_metadata_stack_name)
+
+
+echo ">> Check status in AWS Console"

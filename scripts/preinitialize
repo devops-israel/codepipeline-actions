@@ -3,7 +3,7 @@
 if [[ ! -f '.env' ]]; then
     echo "Copying env to .env"
     cp env .env
-    [[ -f '.env.' ]] && echo "Successfully copied" || echo "Failed to copy" && exit
+    [[ -f '.env' ]] && echo "Successfully copied" || echo "Failed to copy" && exit
 else
     echo ".env exists"
 fi

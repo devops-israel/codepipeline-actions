@@ -2,12 +2,12 @@
 usage()
 {
   cat << EOF
-usage: bash ./scripts/packndeploy -n service_name -s stage -p vault_profie_name
+usage: bash ./scripts/packndeploy -n service_name
 -name | --service_name      (Required)             Service to deploy
 -s    | --stage             ($STAGE)               Stage to deploy
--ghb  | --githubbranch      (master)               CodeBuild
--ghr  | --githubrepo        (codepipeline-actions) CodeBuild
--gho  | --githubowner       (devops-internal)      CodeBuild
+-ghb  | --githubbranch      ($GITHUB_BRANCH)       CodeBuild
+-ghr  | --githubrepo        ($GITHUB_REPONAME)     CodeBuild
+-gho  | --githubowner       ($GITHUB_OWNER)        CodeBuild
 -r    | --region            ($REGION)              Region to deploy
 -a    | --app_name          ($APP_NAME)            App name
 -h    | --help                                     Brings up this menu
@@ -16,10 +16,10 @@ EOF
 
 service_name=
 stage=${STAGE}
-s3_temp_bucket=${TEMP_CFN_TEMPLATES_BUCKET}
+s3_temp_bucket=${TEMP_CFN_TEMPLATES_BUCKET_NAME}
 src_bucket_name=${CANDIDATES_BUCKET_NAME}
 app_name=${APP_NAME}
-region=${REGION}
+region=${AWS_REGION}
 github_branch=${GITHUB_BRANCH}
 github_repo=${GITHUB_REPONAME}
 github_owner=${GITHUB_OWNER}
@@ -36,15 +36,15 @@ while [ "$1" != "" ]; do
         ;;
         -ghb | --github_branch )
             shift
-            githubbranch=$1
+            github_branch=$1
         ;;
         -ghr | --github_repo )
             shift
-            githubbranch=$1
+            github_repo=$1
         ;;
         -gho | --github_owner )
             shift
-            githubbranch=$1
+            github_owner=$1
         ;;                
         -r | --region )
             shift
@@ -54,52 +54,53 @@ while [ "$1" != "" ]; do
             shift
             app_name=$1
         ;;
-        -h | --help )             usage
+        -h | --help ) usage
             exit
         ;;
-        * )                           usage
+        * ) usage
             exit 1
     esac
     shift
 done
 
 if [ -z $service_name ]; then
-    echo "Service name is required, provide it with the flag: -n service_name"
+    echo ">> Service name is required, provide it with the flag: -n service_name"
     exit
 fi
 
 
 if [ -z $s3_temp_bucket ]; then
-    echo "TEMP_CFN_TEMPLATES_BUCKET is empty. Please run: bash ./scripts/initialize"
+    echo ">> TEMP_CFN_TEMPLATES_BUCKET is empty. Please run: bash ./scripts/initialize"
     exit
 fi
 
 if [ -z $stage ]; then
-    echo "Stage is required, provide it with the flag: -s stage"
+    echo ">> Stage is required, provide it with the flag: -s stage"
     exit
 fi
 
 filename="$service_name.yml"
-infra_dir="./examples"
+infra_dir="./aws_resources"
 if [ ! -f "$infra_dir/$filename" ]; then
-    echo "File does not exist, make sure the service name matches the yml file name."
+    echo ">> File does not exist, make sure the service name matches the yml file name."
     exit
 fi
 
 is_codebuild=$(echo "$filename" | grep "codebuild")
+is_codebuild_metadata=$(echo "$filename" | grep "codebuild-metadata")
 is_codepipeline=$(echo "$filename" | grep "codepipeline")
-
-rm -f ./scripts/${app_name}-${service_name}-${stage}.template
+template_file_path="$infra_dir/templates/${app_name}-${service_name}-${stage}.template"
+rm -f "${template_file_path}"
 package=$(aws cloudformation package \
     --template-file "$infra_dir/${filename}" \
     --s3-bucket "${s3_temp_bucket}" \
---output-template-file "./scripts/${app_name}-${service_name}-${stage}.template")
+--output-template-file "${template_file_path}")
 package_success=$(echo $package | grep "YOUR STACK NAME")
 
 if [ -z "${package_success}" ]; then
     echo "${package}"
-    echo "Failed to create package, fix the above."
+    echo ">> Failed to create template, fix the above."
     exit
 fi
 
-echo "Successfully created the package."
+echo ">> Successfully created the template for: $service_name"

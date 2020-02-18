@@ -2,19 +2,35 @@
 # And of course do whatever changes you need so it fits your infrastructure
 vars:
   appname: ${opt:appname}
-  service_name: '${self:custom.appname}-codepipeline-actions'
-  axios:
-  account_number: ${env:AWS_ACCOUNT_NUMBER}
-  region:
-    dev: eu-west-1
-    staging: eu-west-1
-    prod: eu-west-1
+  region: ${env:AWS_REGION}
   memory_size:
     dev: 192
     staging: 192
     prod: 192
-  runtime: nodejs10.x
+  runtime: nodejs12.x
+  layers:
+    dev:
+      dev-cpa-axios:
+        package:
+          artifact: ./axios/axios.zip
+      dev-cpa-formdata:
+        package:
+          artifact: ./formdata/formdata.zip
+    staging:
+      staging-cpa-axios:
+        package:
+          artifact: ./axios/axios.zip
+      staging-cpa-formdata:
+        package:
+          artifact: ./formdata/formdata.zip
+    prod:
+      prod-cpa-axios:
+        package:
+          artifact: ./axios/axios.zip
+      prod-cpa-formdata:
+        package:
+          artifact: ./formdata/formdata.zip
 
   common_env_vars:
-    REGION: '${self:custom.region.${self:provider.stage}}'
+    REGION: '${env:AWS_REGION}'
     STAGE: '${opt:stage}'

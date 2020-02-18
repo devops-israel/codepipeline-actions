@@ -1,9 +1,31 @@
 #!/bin/bash
 source ./scripts/packonly
-echo "Deploying to AWS..."
 
-if [ ! -z $is_pipeline ]; then
+if [ ! -z $is_codepipeline ]; then
+    echo ">> Deploying CodePipeline ..."
+    deploy=$(aws cloudformation deploy \
+        --capabilities CAPABILITY_IAM \
+        --region "${region}" \
+        --template-file "${template_file_path}" \
+        --stack-name "${app_name}-${service_name}-${stage}" \
+    --parameter-overrides AppName=$app_name Stage=$stage CandidatesBucketName=$src_bucket_name)
+elif [ ! -z $is_codebuild_metadata ]; then
+    echo ">> Deploying CodeBuild-Metadata ..."
+    deploy=$(aws cloudformation deploy \
+        --capabilities CAPABILITY_IAM \
+        --region "${region}" \
+        --template-file "${template_file_path}" \
+        --stack-name "${app_name}-${service_name}-${stage}" \
+    --parameter-overrides AppName=$app_name Stage=$stage GithubBranchName=$github_branch GithubRepo=$github_repo GithubOwner=$github_owner MetadataBucketName=${SLACK_POST_METADATA_BUCKET_NAME} MetadataFileName=${SLACK_POST_METADATA_FILE_NAME})
 
-elif [  ! -z $is_codebuild ]; then
-
+elif [ ! -z $is_codebuild ]; then
+    echo ">> Deploying CodeBuild ..."
+    deploy=$(aws cloudformation deploy \
+        --capabilities CAPABILITY_IAM \
+        --region "${region}" \
+        --template-file "${template_file_path}" \
+        --stack-name "${app_name}-${service_name}-${stage}" \
+    --parameter-overrides AppName=$app_name Stage=$stage GithubBranchName=$github_branch GithubRepo=$github_repo GithubOwner=$github_owner CandidatesBucketName=$src_bucket_name)
 fi
+
+echo $deploy

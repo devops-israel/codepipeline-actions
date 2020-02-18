@@ -1,0 +1,20 @@
+#!/bin/bash
+set_env_var () {
+    local key=$1
+    local newvalue=$2
+    current_value=$(cat .env | grep ${key} | cut -d '=' -f 2)
+    if [[ $newvalue != $current_value ]]; then
+        # Replace only if different
+        current_keypair=$(cat .env | grep "$key")
+        if [ -z $current_keypair ]; then
+            current_keypair="${key}="
+        fi
+        echo "${key}=${newvalue}"
+        sed -i "s|${current_keypair}|${key}=${newvalue}|g" .env
+    fi
+}
+
+axios_layer_version=$(aws lambda list-layer-versions --region ${AWS_REGION} --layer-name ${STAGE}-cpa-axios | jq -r '.LayerVersions[0].LayerVersionArn')
+formdata_layer_version=$(aws lambda list-layer-versions --region ${AWS_REGION} --layer-name ${STAGE}-cpa-formdata | jq -r '.LayerVersions[0].LayerVersionArn')
+set_env_var "AXIOS_LAYER_VERSION" "$axios_layer_version"
+set_env_var "FORMDATA_LAYER_VERSION" "$formdata_layer_version"

@@ -1,0 +1,111 @@
+#!/bin/bash
+is_number () {
+    local var=$1
+    re_number='^[0-9]+$'
+    [[ $var =~ $re_number ]] && echo 0 || echo 1
+}
+
+exists_bucket () {
+    local bucket_name=$1
+    aws s3api head-bucket --bucket "$bucket_name" 2>/dev/null;
+    echo $?
+}
+
+set_env_var () {
+    local key=$1
+    local newvalue=$2
+    current_value=$(cat .env | grep ${key} | cut -d '=' -f 2)
+    if [[ $newvalue != $current_value ]]; then
+        # Replace only if different
+        current_keypair=$(cat .env | grep "$key")
+        if [ -z $current_keypair ]; then
+            current_keypair="${key}="
+        fi
+        echo "${key}=${newvalue}"
+        sed -i "s|${current_keypair}|${key}=${newvalue}|g" .env
+    fi
+}
+
+get_account_number() {
+    echo $(aws sts get-caller-identity | jq -r .Account)
+}
+
+select_newest_bucket () {
+    local filter=${1}
+    buckets_list=$(aws s3api list-buckets)
+    buckets_list_sorted=$(echo "${buckets_list}" | jq  -cr '.Buckets | sort_by(.CreationDate)')
+    arr_string=$(echo "${buckets_list_sorted}" | jq --arg str "${filter}" -cr '.[] | select(.Name|test($str)) | .Name' | tr ' ' '\n')
+    arr=($(echo "${arr_string}"))
+    if [ "${#arr[@]}" -eq 0 ]; then
+        unset arr && arr=("")
+    fi
+    echo "${arr[-1]}"
+}
+
+create_bucket() {
+    local context=$1
+    bucket_name=${APP_NAME}-${context}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 10 | head -n 1)-${STAGE}
+    result=$(aws s3api create-bucket --bucket $bucket_name \
+        --region ${AWS_REGION} \
+        --create-bucket-configuration LocationConstraint=${AWS_REGION} \
+        --acl=private)
+    echo $bucket_name
+}
+
+put_bucket_versioning () {
+    local bucket_name=$1
+    result=$(aws s3api put-bucket-versioning --bucket $bucket_name \
+        --versioning-configuration Status=Enabled)
+    echo $result
+}
+
+handle_bucket () {
+    local env_key=$1 bucket_context=$2 versioning=$3
+    filter="${APP_NAME}-${bucket_context}-[a-z0-9]*-${STAGE}"
+    bucket_name=$(select_newest_bucket "${filter}")
+    bucket_exists=$(exists_bucket "${bucket_name}")
+    if [[ ! -z $bucket_name && $bucket_exists -eq 0 ]]; then
+        set_env_var $env_key $bucket_name
+    else # doesn't exist, create bucket
+        bucket_name=$(create_bucket $bucket_context)
+        if [[ ! -z $versioning ]]; then
+            versioning=$(put_bucket_versioning $bucket_name)
+        fi
+        set_env_var $env_key $bucket_name
+    fi
+}
+
+# set account number if empty
+# [[ -z $AWS_ACCOUNT_NUMBER ]] && set_env_var 'AWS_ACCOUNT_NUMBER' $(get_account_number)
+
+# handle_bucket "CODEPIPELINE_ACTIONS_DEPLOYMENT_BUCKET_NAME" \
+#     "cpa-deployment" \
+#     "versioning"
+
+# handle_bucket "LAYERS_DEPLOYMENT_BUCKET_NAME" \
+#     "cpa-layers-deployment" \
+#     "versioning"
+
+handle_bucket "CANDIDATES_BUCKET_NAME" \
+    "cpa-candidates" \
+    "versioning"
+
+handle_bucket "COPY_OBJECT_TARGET_BUCKET_NAME" \
+    "cpa-testedcandidates" \
+    "versioning"
+
+handle_bucket "TEMP_CFN_TEMPLATES_BUCKET_NAME" \
+    "cpa-cfn-templates"
+
+set_env_var "CODEPIPELINE_INVOKE_LAMBDA_FUNCTION_NAME" \
+    "${APP_NAME}-cpa-${STAGE}-slackUpdateRelease"
+
+set_env_var "CODEPIPELINE_AUTO_INVOKE_LAMBDA_FUNCTION_NAME" \
+    "${APP_NAME}-cpa-${STAGE}-slackUploadQaResults"
+
+export $(cat .env | grep "")
+set_env_var "SLACK_POST_METADATA_BUCKET_NAME" \
+    $(echo $(cat .env | grep 'CANDIDATES_BUCKET_NAME' | cut -d '=' -f 2))
+
+set_env_var "SLACK_UPLOAD_BUCKET_NAME" \
+    $(echo $(cat .env | grep 'CANDIDATES_BUCKET_NAME' | cut -d '=' -f 2))

@@ -1,8 +1,7 @@
-const Lambda = require('aws-sdk/clients/lambda');
-const lambda = new Lambda({ apiVersion: '2015-03-31' });
 const querystring = require('querystring');
 const CodePipeline = require('aws-sdk/clients/codepipeline');
 const codepipeline = new CodePipeline({ apiVersion: '2015-07-09' });
+import { invoke_lambda } from '../../codepipeline-shared/src/controller';
 import { ApprovalParams } from './interface';
 import { removeLatestVersion } from '../../codepipeline-shared/src/controller';
 import { createHmac } from 'crypto';
@@ -45,26 +44,6 @@ function getResponseObject(status: string, message: any) {
       },
     };
   }
-}
-
-async function invoke_lambda(function_name: any, payload: any) {
-  return new Promise(function(resolve, reject) {
-    var params = {
-      FunctionName: function_name,
-      Payload: JSON.stringify(payload),
-      InvocationType: 'Event', // async
-    };
-    console.log(`Invoking Lambda Function: ${lambda_function_name}`);
-    lambda.invoke(params, function(err: any, data: any) {
-      if (err) {
-        console.log(err, err.stack);
-        reject(err);
-      } else {
-        console.log(data);
-        resolve(data);
-      }
-    });
-  });
 }
 
 function isVerified(event: any) {
@@ -114,7 +93,7 @@ export function getParams(event: any) {
 
 export async function processApproval(event: any) {
   // console.log(JSON.stringify(event));
-  if (event['path'].indexOf('/codepipeline/') === -1) {
+  if (event['path'].indexOf('/codepipeline-actions/') === -1) {
     return 'Not Slack SNS Payload';
   }
   if (!isVerified(event)) {
