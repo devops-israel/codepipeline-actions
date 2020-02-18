@@ -51,8 +51,8 @@ codepipeline-actions.s3-eu-west-1.amazonaws.com/cpa-cf-template.yml
 
 You need to create a metadata file which holds all of the information from GitHub.
 
-- Example for creating a specific metadata.nfo file - [cpa-cf-codbuild-metadata.yml](./aws_resources/cpa-cf-codbuild-metadata.yml)
-- Example for creating a adding metadata info to your build ZIP file - [cpa-cf-codbuild.yml](./aws_resources/cpa-cf-codbuild.yml)
+- Example for creating a specific metadata.nfo file - [cpa-cf-codebuild-metadata.yml](./aws_resources/cpa-cf-codebuild-metadata.yml)
+- Example for creating a adding metadata info to your build ZIP file - [cpa-cf-codebuild.yml](./aws_resources/cpa-cf-codebuild.yml)
 
 1. Make sure your CodeBuild has permissions to copy files to the Metadata bucket
 1. Add this to `build` or `install` phase in your `buildspec.yml`
@@ -79,7 +79,7 @@ _TODO_: Add instructions on how to do it via AWS Console
 
 #### CodePipeline
 
-Add relevant topics in your CodePipeline, full example - [cpa-cf-codepipeline.yml](./aws_resources/cpa-codepipeline.yml)
+Add relevant topics in your CodePipeline, full example - [cpa-cf-codepipeline.yml](./aws_resources/cpa-cf-codepipeline.yml)
 
 ```yml
    Stages:
