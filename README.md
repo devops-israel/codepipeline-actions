@@ -3,16 +3,109 @@
 Improve the use of CodePipeline by adding the following features:
 
 1. Approve Manual Approval step via Slack
-1. Copy files according to condition
 1. Automatically approve/reject Manual Approval step according to QA results
+1. Copy files according to condition, for example: passed auto-qa tests
 
 **Note**: to shorten the resources' names, you'll sometimes see `cpa` instead of `codepipeline-actions`
 
-## Getting Started
+![Approve-Example](./assets/cpa-approve-example.png 'Approve Example')
+
+<details><summary><h4 style="display:inline-block">More Examples</h2>
+</summary>
+
+![Build-Succeeded-Example](./assets/cpa-approve-example.png 'Build Succeeded Example')
+
+![Approved-Example](./assets/cpa-approved-example.png 'Approved Example')
+
+</details>
+
+## Quick-start
+
+### Deploy
+
+[![Launch in Virginia](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png) Virginia us-east-1](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://codepipeline-actions.s3-eu-west-1.amazonaws.com/cpa-cf-template.yml)
+
+[![Launch in Ireland](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png) Ireland eu-west-1](https://eu-west-1.console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/quickcreate?templateURL=https://codepipeline-actions.s3-eu-west-1.amazonaws.com/cpa-cf-template.yml)
+
+[![Launch in Hong Kong](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png) Hong Kong ap-east-1](https://eu-west-1.console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/quickcreate?templateURL=https://codepipeline-actions.s3-eu-west-1.amazonaws.com/cpa-cf-template.yml)
+
+[![Launch in Canada](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png) Canada ca-central-1](https://eu-west-1.console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/quickcreate?templateURL=https://codepipeline-actions.s3-eu-west-1.amazonaws.com/cpa-cf-template.yml)
+
+<details><summary><h4 style="display:inline-block">More regions</h4>
+</summary>
+
+To deploy in other regions, replace AWS_REGION with the region's code
+
+```
+https://AWS_REGION.console.aws.amazon.com/cloudformation/home?region=AWS_REGION#/stacks/quickcreate?templateURL=https://
+codepipeline-actions.s3-eu-west-1.amazonaws.com/cpa-cf-template.yml
+```
+
+</details>
+
+### Configure
+
+#### CodeBuild
+
+You need to create a metadata file which holds all of the information from GitHub.
+
+- Example for creating a specific metadata.nfo file - [cpa-cf-codbuild-metadata.yml](./aws_resources/cpa-cf-codbuild-metadata.yml)
+- Example for creating a adding metadata info to your build ZIP file - [cpa-cf-codbuild.yml](./aws_resources/cpa-cf-codbuild.yml)
+
+1. Make sure your CodeBuild has permissions to copy files to the Metadata bucket
+1. Add this to `build` or `install` phase in your `buildspec.yml`
+   ```yml
+   phases:
+     install:
+       runtime-versions:
+         ... # your runtime
+       commands:
+         ... # other commands
+         - echo ">> Creating ${METADATA_FILE_NAME} locally"
+         - echo "my qa results" > ${METADATA_FILE_NAME}
+   ```
+1. Add this to `post_build` phase inr your `buildspec.yml`
+   ```yml
+   build:
+     commands:
+      ... # other commands
+       - echo ">> Copying ${METADATA_FILE_NAME} to the bucket ${METADATA_BUCKET_NAME}"
+       - aws s3 cp ${METADATA_FILE_NAME} s3://${METADATA_BUCKET_NAME}/${METADATA_FILE_NAME} --metadata qa_status=success,source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}
+   ```
+
+_TODO_: Add instructions on how to do it via AWS Console
+
+#### CodePipeline
+
+Add relevant topics in your CodePipeline, full example - [cpa-cf-codepipeline.yml](./aws_resources/cpa-codepipeline.yml)
+
+```yml
+   Stages:
+   ... # other stages
+      - Name: Release
+         Actions:
+         - Name: ManualReleaseApproval
+            ActionTypeId:
+               Category: Approval
+               Owner: AWS
+               Provider: Manual
+               Version: "1"
+            Configuration:
+               # This is where use the SNS Topic
+               NotificationArn: !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${AppName}-cpa-Release-${Stage}"
+               CustomData: !Sub "${Stage}"
+            RunOrder: 1
+```
+
+_TODO_: Add instructions on how to do it via AWS Console
+
+<details><summary><h2 style="display:inline-block">Contributing</h2>
+</summary>
 
 ### Prerequisites
 
 1. AWS user with Administrator privileges
+1. [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 1. [yarn](https://yarnpkg.com/lang/en/docs/install/)
 1. [bash](https://www.gnu.org/software/bash/)
 1. [Docker](https://docs.docker.com/install/)
@@ -21,6 +114,9 @@ Improve the use of CodePipeline by adding the following features:
    - Create CodeBuild project
    - Source Provider: GitHub, Repository in my GitHub account and click Connect
    - Discard the CodeBuild project
+1. [aws-vault](https://github.com/99designs/aws-vault) (Optional, but recommended)
+
+_TODO_: Create a Docker image of prerequisites
 
 ### Installing
 
@@ -85,7 +181,15 @@ bash-5.0#
 
 Create a pull-request, from any branch to `develop` branch, now look at `codepipeline_notifications` channel in Slack
 
-## Troubleshooting
+</details>
+
+<details><summary><h2 style="display:inline-block">Troubleshooting</h2>
+</summary>
+
+### Not getting Approval messages in Slack
+
+If you updated the SNS-Topic, then the link to it in CodePipeline might be broken.
+Re-deploy CodePipeline with a different SNS-Topic, and then re-deploy CodePipeline with the corrent SNS-Topic.
 
 ### Forgot to update `.env` with Slack secrets
 
@@ -97,7 +201,4 @@ bash-5.0#  yarn deploy:cpa
 
 This will re-deploy the Lambda Functions (services) with the updated secrets.
 
-### Not getting Approval messages in Slack
-
-If you updated the SNS-Topic, then the link to it in CodePipeline might be broken.
-Re-deploy CodePipeline with a different SNS-Topic, and then re-deploy CodePipeline with the corrent SNS-Topic.
+</details>

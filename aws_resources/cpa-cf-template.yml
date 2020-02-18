@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >
     1. https://api.slack.com/apps > Create a Slack application >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    2. Slack App > OAuth & Permissions > Scopes > chat:write, files:write >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    4. Slack > Add the Bot User to your channel >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    2. Slack App > OAuth & Permissions > Scopes > Bot Token Scopes > chat:write, files:write >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    4. Slack > Add Slack application your channel >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     5. This Stack > Leave empty values if you don't intend to use a function > Create Stack >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    6. After creating this Stack > Slack App > Interactive Components > On > Set Request URL to this template's API Gateway Endpoint URL >>>>>>>>>>>
+    6. After creating this Stack > Slack App > Interactive Components (toggle On) > Set Request URL to this template's API Gateway Endpoint URL
 
 Parameters:
     # 7. Add the following lines to the post_build of your CodeBuild project:
