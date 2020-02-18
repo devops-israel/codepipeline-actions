@@ -58,6 +58,7 @@ You need to create a metadata file which holds all of the information from GitHu
 1. Add this to `build` or `install` phase in your `buildspec.yml`
    ```yml
    phases:
+     ... # other phases
      install:
        runtime-versions:
          ... # your runtime
@@ -68,11 +69,13 @@ You need to create a metadata file which holds all of the information from GitHu
    ```
 1. Add this to `post_build` phase inr your `buildspec.yml`
    ```yml
-   build:
-     commands:
-      ... # other commands
-       - echo ">> Copying ${METADATA_FILE_NAME} to the bucket ${METADATA_BUCKET_NAME}"
-       - aws s3 cp ${METADATA_FILE_NAME} s3://${METADATA_BUCKET_NAME}/${METADATA_FILE_NAME} --metadata qa_status=success,source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}
+   phases:
+      ... # other phases
+      post_build:
+         commands:
+            ... # other commands
+            - echo ">> Copying ${METADATA_FILE_NAME} to the bucket ${METADATA_BUCKET_NAME}"
+            - aws s3 cp ${METADATA_FILE_NAME} s3://${METADATA_BUCKET_NAME}/${METADATA_FILE_NAME} --metadata qa_status=success,source_id=${CODEBUILD_RESOLVED_SOURCE_VERSION},webhook_base_ref=${CODEBUILD_WEBHOOK_BASE_REF},webhook_head_ref=${CODEBUILD_WEBHOOK_HEAD_REF},webhook_event=${CODEBUILD_WEBHOOK_EVENT},webhook_actor=${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID},webhook_trigger=${CODEBUILD_WEBHOOK_TRIGGER},repo_url=${CODEBUILD_SOURCE_REPO_URL}
    ```
 
 _TODO_: Add instructions on how to do it via AWS Console
